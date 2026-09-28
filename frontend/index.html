@@ -290,13 +290,13 @@ table.pool td.name{font-family:Fraunces,Georgia,serif;font-size:16px;cursor:poin
     <p>Each game passes through six parts in order. The output is a record, not a score.</p>
     <ol>
       <li><strong>Carrying mechanic.</strong> The rule element without which this is a different game. Everything below is judged against it.</li>
-      <li><strong>Gates.</strong> G1 a rule system with a defined end state. G2 a bounded session without unrepresentable equipment. G3 the carrying mechanic is kept or transformed under at least one interface class: S screen-only touch, M motion or sensor, L location or co-located.</li>
+      <li><strong>Gates.</strong> G1 a rule system with a defined end state. G2 a bounded session without unrepresentable equipment. G3 the carrying mechanic survives under at least one of two interface classes: S screen-only touch, or M motion or sensor. It survives when it is kept or transformed, or when it is substituted and the substitution test passes. L, co-located play with the device as referee or prop, is recorded but carries neither the gate nor the hybrid flag.</li>
       <li><strong>Route.</strong> R1 needs an opponent and produces a winner. R2 closes without a winner and can be played alone. R3 has a making layer where the constructed object decides performance. Decided by test, not keywords: remove the second player; is there a build phase.</li>
       <li><strong>Dimensions, 0–2 with a written descriptor.</strong> MC rule decomposability. LOM the counterfactual: remove the educational content, does the same strategy still win. AGE which developmental competence the mechanic depends on and whether it carries a native scaling parameter. CT-a legibility from the rules alone; CT-b and CT-c recorded, not scored.</li>
       <li><strong>Ledger.</strong> For each rule and material element: kept, transformed, substituted, removed, added under the target class. The S column of the DIG profile is read off this table.</li>
       <li><strong>Distinctiveness.</strong> D0 rule-for-rule counterpart found, D1 family counterpart with a differing rule, D2 none found. The model does not assign a level (instrument v0.5): it cannot browse, so it gives a search hypothesis only. A separate, logged retrieval step finds candidates and retains a counterpart only if it has a resolvable identifier (Ludii, BoardGameGeek, Wikipedia). The coder reviews the log, confirms or overrides the counterpart, assigns the level and sets verified.</li>
     </ol>
-    <p><strong>Eligibility as a worked example</strong> requires MC ≥ 1, LOM ≥ 1, DIG ≥ transformed under the target class, CT-a ≥ 1, and all sections reviewed by a coder. Nothing compensates for a failed minimum.</p>
+    <p><strong>Eligibility</strong> requires the three gates, MC ≥ 1, CT-a ≥ 1, survival of the carrying mechanic on screen, and all sections reviewed by a coder. Nothing compensates for a failed minimum. Where an educational objective is stated, LOM ≥ 1 applies as a further filter and is reported separately. A game that does not survive on screen but survives with sensors is flagged as a hybrid candidate.</p>
     <p><strong>Division of labour.</strong> The model reads consistently, quotes the source, drafts the ledger and names ambiguities. The human decides. Scores used in a paper are the reviewed ones; the raw extraction is kept alongside so agreement can be measured on a gold set.</p>
     <p class="small">Records are stored in the shared pool for everyone in the organisation who opens this page. The pool is organisation-internal and cannot be shared publicly.</p>
   </div>
@@ -348,10 +348,10 @@ const SAMPLE = {
  id:"seksek", name:"Seksek Oyunu", altNames:"hopscotch family; Lebbiyh (variant)",
  source:{region:"Attested in more than fifteen provinces",players:"1 or more, in turn",session:"Minutes"},
  carryingMechanic:{text:"Hopping on one foot through a numbered grid in sequence, skipping the square holding the thrown stone, without stepping on a line.",evidence:"the player hops on one foot through the squares and retrieves it"},
- gates:{G1:{pass:true,reason:"Defined end: completing all squares.",evidence:"A stone is thrown onto numbered squares"},G2:{pass:true,reason:"Chalk and a stone; one sitting.",evidence:""},G3:{pass:true,reason:"Substituted under S, transformed under M (step detection), kept under L (phone as referee).",classes:["M","L"],evidence:""}},
+ gates:{G1:{pass:true,reason:"Defined end: completing all squares.",evidence:"A stone is thrown onto numbered squares"},G2:{pass:true,reason:"Chalk and a stone; one sitting.",evidence:""},G3:{pass:true,reason:"Substituted under S, and the substitution test fails. Transformed under M: step detection.",classes:["M"],evidence:""}},
  route:{primary:"R2",secondary:"",test:"Remove the second player: still playable alone with a defined end and no winner."},
  dimensions:{MC:{level:2,descriptor:"Decomposes fully: throw to square n, hop sequence, skip n, no line contact, retrieve.",evidence:""},LOM:{level:1,objective:"sequencing and balance",counterfactual:"Remove numbering: the hop sequence still wins; remove balance demand: the game collapses. Balance is motor, not educational; sequencing constrains but does not decide.",evidence:""},AGE:{level:2,competence:"single-leg balance (age 5+)",parameter:"grid length and shape",evidence:"attested in many grid variants"},CTa:{level:2,evidence:""},CTb:{level:0,note:"Numbering and grid carry no cultural content."},CTc:{level:2,note:"Living practice across Türkiye and internationally."}},
- dig:{S:{op:"Substituted",note:"Tap-through of squares keeps the grid and loses the hop."},M:{op:"Transformed",note:"Step detection enforces one-foot hops; line faults not detectable."},L:{op:"Kept",note:"Real grid, phone as caller and scorekeeper."}},
+ dig:{S:{op:"Substituted",note:"Tap-through of squares keeps the grid and loses the hop.",substitutionTest:{pass:false,reason:"The hop is the competence the game exists to exercise, and tapping does not transfer it."}},M:{op:"Transformed",note:"Step detection enforces one-foot hops; line faults not detectable."},L:{op:"Kept",note:"Real grid, phone as caller and scorekeeper."}},
  ledger:[
   {element:"Numbered grid",type:"Material",original:"Chalk on ground, 6-10 squares",underS:"Drawn grid",operation:"Kept",note:""},
   {element:"Throw stone to square n",type:"Rule",original:"Underarm throw, must land inside",underS:"Flick to square",operation:"Transformed",note:"Aim becomes timing"},
@@ -850,7 +850,7 @@ function renderSheet(){
     ${[["G1","Rule system"],["G2","Bounded session"],["G3","Survival under some class"]].map(([k,t])=>`
     <div class="gate"><div><div class="small" style="margin-bottom:4px">${k} ${t}</div>${pf("gates."+k+".pass",r.gates[k].pass)}</div>
       <div>${ta("gates."+k+".reason",r.gates[k].reason,"Reason",r.gates[k].evidence)}
-      ${k==="G3"?`<div class="row" style="margin-top:4px"><span class="small">Survives under:</span>${["S","M","L"].map(c=>`<label class="small"><input type="checkbox" data-class="${c}" ${(r.gates.G3.classes||[]).includes(c)?"checked":""}> ${c}</label>`).join("")}</div>`:""}</div></div>`).join("")}
+      ${k==="G3"?`<div class="row" style="margin-top:4px"><span class="small">Survives under:</span>${["S","M"].map(c=>`<label class="small"><input type="checkbox" data-class="${c}" ${(r.gates.G3.classes||[]).includes(c)?"checked":""}> ${c}</label>`).join("")}</div>`:""}</div></div>`).join("")}
   </section>
 
   <section class="block">${head("route","Adaptation route","architecture, not a tier")}
