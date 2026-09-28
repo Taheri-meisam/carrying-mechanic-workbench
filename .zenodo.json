@@ -1,0 +1,15 @@
+{
+  "title": "Carrying Mechanic workbench: a selection instrument and workbench for traditional games",
+  "upload_type": "software",
+  "version": "1.1.0",
+  "description": "<p>Software for deciding, before any adaptation exists, which documented traditional games are supported for a digital or hybrid interface. A language model drafts a structured record for each game with a quotation for every judgement, a person decides every field, and eligibility is computed by rule.</p><p>Contains the instrument (v0.5), the record schema, the workbench, the evaluation code, the test suite, a synthetic corpus of 24 game descriptions, and the analysis scripts of the accompanying articles. The manuscripts of the articles are published separately. The encyclopaedia entries and the coded records are not included: the entries belong to the Ministry of Youth and Sports of the Republic of T&uuml;rkiye, whose authorisation covers research use and not redistribution.</p><p>Developed under COST Action CA22145 GameTable (Computational Techniques for Tabletop Games Heritage).</p>",
+  "creators": [
+    {"name": "Taheri, Meisam", "affiliation": "University of Inland Norway"},
+    {"name": "Büber Kaya, Hatice", "affiliation": "Kırklareli University"}
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": ["traditional games", "game adaptation", "selection instrument", "human-in-the-loop", "large language models", "inter-rater reliability", "cultural heritage"],
+  "grants": [],
+  "notes": "This work was supported by COST (European Cooperation in Science and Technology) through COST Action CA22145 GameTable."
+}

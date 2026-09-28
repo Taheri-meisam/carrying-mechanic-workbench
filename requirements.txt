@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2
+python-multipart
+openpyxl          # coding sheets (backend/coding_sheet.py)
+anthropic>=0.40   # optional: only for MODEL_PROVIDER=anthropic; the local provider uses the standard library
+httpx             # the test client
+pytest

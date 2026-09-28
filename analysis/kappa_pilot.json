@@ -1,0 +1,168 @@
+[
+ {
+  "field": "Route",
+  "agree": 6,
+  "n": 9,
+  "kappa": 0.229,
+  "coder1_dist": {
+   "R1": 7,
+   "R3": 2
+  },
+  "coder2_dist": {
+   "R1": 6,
+   "R2": 1,
+   "R3": 2
+  },
+  "disagreements": [
+   "Akdört: R3/R1",
+   "Birdir: R1/R2",
+   "Bostan: R1/R3"
+  ]
+ },
+ {
+  "field": "MC",
+  "agree": 5,
+  "n": 9,
+  "kappa": 0.143,
+  "coder1_dist": {
+   "1": 6,
+   "2": 3
+  },
+  "coder2_dist": {
+   "1": 4,
+   "2": 5
+  },
+  "disagreements": [
+   "Akdört: 2/1",
+   "Atlı: 1/2",
+   "Birdir: 1/2",
+   "Bostan: 1/2"
+  ]
+ },
+ {
+  "field": "LOM",
+  "agree": 3,
+  "n": 9,
+  "kappa": -0.421,
+  "coder1_dist": {
+   "1": 7,
+   "2": 2
+  },
+  "coder2_dist": {
+   "1": 5,
+   "2": 4
+  },
+  "disagreements": [
+   "Araya: 1/2",
+   "Atlı: 2/1",
+   "Aşırtmalı: 1/2",
+   "Deynek: 1/2",
+   "Kökbörü: 2/1",
+   "Tahta: 1/2"
+  ]
+ },
+ {
+  "field": "AGE",
+  "agree": 6,
+  "n": 9,
+  "kappa": 0.509,
+  "coder1_dist": {
+   "0": 3,
+   "1": 2,
+   "2": 4
+  },
+  "coder2_dist": {
+   "0": 4,
+   "1": 3,
+   "2": 2
+  },
+  "disagreements": [
+   "Araya: 0/1",
+   "Deynek: 2/0",
+   "Kökbörü: 2/0"
+  ]
+ },
+ {
+  "field": "CT-a",
+  "agree": 6,
+  "n": 9,
+  "kappa": 0.308,
+  "coder1_dist": {
+   "1": 5,
+   "2": 4
+  },
+  "coder2_dist": {
+   "1": 6,
+   "2": 3
+  },
+  "disagreements": [
+   "Bostan: 1/2",
+   "Deynek: 2/1",
+   "Tahta: 2/1"
+  ]
+ },
+ {
+  "field": "DIG(S)",
+  "agree": 8,
+  "n": 9,
+  "kappa": 0.795,
+  "coder1_dist": {
+   "Substituted": 5,
+   "Transformed": 4
+  },
+  "coder2_dist": {
+   "Kept": 1,
+   "Substituted": 5,
+   "Transformed": 3
+  },
+  "disagreements": [
+   "Akdört: Transformed/Kept"
+  ]
+ },
+ {
+  "field": "D",
+  "agree": 8,
+  "n": 9,
+  "kappa": 0.0,
+  "coder1_dist": {
+   "D1": 9
+  },
+  "coder2_dist": {
+   "D0": 1,
+   "D1": 8
+  },
+  "disagreements": [
+   "Birdir: D1/D0"
+  ]
+ },
+ {
+  "field": "G1",
+  "agree": 9,
+  "n": 9,
+  "kappa": null,
+  "coder1_dist": {
+   "True": 9
+  },
+  "coder2_dist": {
+   "True": 9
+  },
+  "disagreements": []
+ },
+ {
+  "field": "G2",
+  "agree": 8,
+  "n": 9,
+  "kappa": 0.727,
+  "coder1_dist": {
+   "False": 3,
+   "True": 6
+  },
+  "coder2_dist": {
+   "False": 2,
+   "True": 7
+  },
+  "disagreements": [
+   "Deynek: False/True"
+  ]
+ }
+]

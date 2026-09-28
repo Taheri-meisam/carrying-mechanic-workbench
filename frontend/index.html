@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carrying Mechanic — game selection workbench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#E9EBE3; --paper:#FCFCF8; --paper-2:#F2F4EB; --ink:#171D19; --muted:#59645E;
+  --line:#CED3C8; --line-strong:#AEB6A9;
+  --accent:#2C3E8C; --accent-ink:#FFFFFF; --accent-soft:#E3E8F7;
+  --pass:#2E6B40; --pass-soft:#E0EFE4; --fail:#9B3226; --fail-soft:#F8E3DF; --warn:#875D11; --warn-soft:#F7ECD7;
+  --chip:#E6E9DF; --chip-ink:#2A322D; --focus:#2C3E8C;
+  --shadow:0 1px 2px rgba(23,29,25,.06), 0 4px 14px rgba(23,29,25,.05);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#131715; --paper:#1D2320; --paper-2:#252C28; --ink:#E9EBE4; --muted:#97A19A;
+  --line:#333A35; --line-strong:#4B534C;
+  --accent:#95A4EE; --accent-ink:#11162E; --accent-soft:#232A47;
+  --pass:#82B88F; --pass-soft:#1D2E23; --fail:#E68D7D; --fail-soft:#34221E; --warn:#DDAF57; --warn-soft:#2F2718;
+  --chip:#2B322D; --chip-ink:#DBDFD6; --focus:#95A4EE;
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.30);
+}}
+:root[data-theme="dark"]{
+  --bg:#131715; --paper:#1D2320; --paper-2:#252C28; --ink:#E9EBE4; --muted:#97A19A;
+  --line:#333A35; --line-strong:#4B534C;
+  --accent:#95A4EE; --accent-ink:#11162E; --accent-soft:#232A47;
+  --pass:#82B88F; --pass-soft:#1D2E23; --fail:#E68D7D; --fail-soft:#34221E; --warn:#DDAF57; --warn-soft:#2F2718;
+  --chip:#2B322D; --chip-ink:#DBDFD6; --focus:#95A4EE;
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.30);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+header{display:flex;align-items:baseline;gap:24px;padding:16px 28px 0;border-bottom:1px solid var(--line);background:var(--paper);flex-wrap:wrap;position:sticky;top:0;z-index:20}
+header h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:22px;margin:0 0 14px;letter-spacing:-.01em}
+header h1 span{color:var(--muted);font-weight:400}
+.headright{display:flex;align-items:center;gap:10px;margin-left:auto}
+nav{display:flex;gap:4px}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:6px 10px 12px;color:var(--muted);cursor:pointer}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.themetog{background:var(--paper-2);border:1px solid var(--line);color:var(--muted);cursor:pointer;width:32px;height:32px;line-height:1;margin:0 0 10px;border-radius:5px;flex:0 0 auto}
+.themetog:hover{color:var(--ink);border-color:var(--accent)}
+.status{font-size:13px;color:var(--muted);padding-bottom:12px;display:flex;gap:14px}
+.status b{font-weight:500;color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:6px;vertical-align:middle}
+.dot.on{background:var(--pass)}
+
+main{padding:22px 28px 70px;max-width:1560px;margin:0 auto}
+.view{display:none}.view.active{display:block}
+
+/* record view */
+.record{display:grid;grid-template-columns:380px 150px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:1320px){.record{grid-template-columns:340px minmax(0,1fr)}.record .rail{display:none}}
+@media (max-width:980px){.record{grid-template-columns:1fr}.srcwrap,.verdict{position:static}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 20px;box-shadow:var(--shadow)}
+.panel h2{font-size:13px;font-weight:600;margin:0 0 10px;color:var(--muted)}
+textarea.entry{width:100%;min-height:300px;resize:vertical;background:var(--paper-2);border:1px solid var(--line);padding:10px;line-height:1.55;border-radius:4px}
+input.text{width:100%;background:var(--paper-2);border:1px solid var(--line);padding:8px 10px;border-radius:4px}
+.row{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.btn{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);padding:8px 14px;cursor:pointer;font-weight:500;border-radius:4px;transition:filter .12s}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn.secondary{background:var(--paper);color:var(--ink);border-color:var(--line-strong)}
+.btn.secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.think{margin-top:12px;font-size:13px;color:var(--muted);white-space:pre-wrap;max-height:180px;overflow:auto;border-left:3px solid var(--line);padding-left:10px;display:none}
+
+.sheet h2.name{font-family:Fraunces,Georgia,serif;font-size:34px;font-weight:600;margin:0;letter-spacing:-.01em;line-height:1.1}
+.sheet .sub{color:var(--muted);margin:6px 0 18px}
+.empty{padding:70px 24px;text-align:center;color:var(--muted);border:1px dashed var(--line-strong);border-radius:6px;line-height:1.7}
+section.block{border-top:1px solid var(--line);padding:16px 0 18px}
+section.block:first-of-type{border-top:0}
+.blockhead{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.blockhead h3{margin:0;font-size:15px;font-weight:600}
+.blockhead .why{color:var(--muted);font-size:13px}
+.blockhead label.rev{margin-left:auto;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 20px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:3px}
+.field textarea,.field input,.field select{width:100%;background:var(--paper-2);border:1px solid var(--line);padding:7px 9px;line-height:1.45;border-radius:4px}
+.field textarea:focus,.field input:focus,.field select:focus{border-color:var(--accent);background:var(--paper)}
+.field textarea{min-height:56px;resize:vertical}
+.field .ev{font-size:12.5px;color:var(--muted);margin-top:3px;font-style:italic}
+.field .ev:before{content:"source: "}
+.levels{display:flex;gap:6px}
+.levels button{flex:0 0 auto;min-width:38px;padding:5px 9px;border:1px solid var(--line);background:var(--paper-2);cursor:pointer;border-radius:4px}
+.levels button:hover{border-color:var(--accent)}
+.levels button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.gate{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:start;padding:8px 0;border-bottom:1px dotted var(--line)}
+.gate:last-child{border-bottom:0}
+.pf{display:flex;gap:4px}
+.pf button{padding:4px 11px;border:1px solid var(--line);background:var(--paper-2);cursor:pointer;font-size:13px;border-radius:4px}
+.pf button:hover{border-color:var(--accent)}
+.pf button.pass[aria-pressed="true"]{background:var(--pass);color:#fff;border-color:var(--pass)}
+.pf button.fail[aria-pressed="true"]{background:var(--fail);color:#fff;border-color:var(--fail)}
+table.ledger{width:100%;border-collapse:collapse;font-size:13.5px}
+table.ledger th{text-align:left;font-weight:500;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line);font-size:12.5px}
+table.ledger td{padding:4px 4px;vertical-align:top;border-bottom:1px dotted var(--line)}
+table.ledger input,table.ledger select{width:100%;background:transparent;border:0;border-bottom:1px solid transparent;padding:4px 2px}
+table.ledger input:focus,table.ledger select:focus{border-bottom-color:var(--accent);outline:0}
+.op-Kept{color:var(--pass)}.op-Transformed{color:var(--warn)}.op-Substituted,.op-Removed{color:var(--fail)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--chip);color:var(--chip-ink);padding:3px 9px;font-size:13px;border-radius:999px;border:1px solid transparent}
+.chip.pass{background:var(--pass-soft);color:var(--pass);border-color:var(--pass)}
+.chip.fail{background:var(--fail-soft);color:var(--fail);border-color:var(--fail)}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.verdict{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;background:var(--paper-2);border:1px solid var(--line);border-radius:6px;margin-top:6px;position:sticky;top:calc(var(--headh, 78px) + 8px);z-index:10}
+.verdict strong{font-size:16px}
+.prog{margin-left:auto;display:inline-block;width:72px;height:6px;background:var(--chip);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--pass);transition:width .15s}
+.unsaved{color:var(--warn);font-size:13px;white-space:nowrap}
+/* blind mode: the pool must not leak coder 1's values either — keep only the game and its status */
+body.coder2 table.pool :is(th,td):nth-child(n+2):nth-child(-n+13){display:none}
+body.coder2 nav button[data-view="eval"]{display:none}
+body.coder2 .filters{display:none}
+/* provenance strip under the record name: which model, instrument and prompt made this draft */
+.prov{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin:2px 0 14px}
+.prov code{font-size:12px;background:var(--paper-2);padding:1px 5px;border-radius:3px}
+.prov .stale{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);padding:1px 8px;border-radius:999px}
+.prov button{font-size:12px;padding:3px 9px}
+.lv.stale,.chip.stale{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+.blindbar{background:var(--warn-soft);border:1px solid var(--warn);color:var(--warn);padding:10px 14px;border-radius:6px;font-size:13.5px}
+.checks{border:1px solid var(--warn);background:var(--paper);padding:10px 14px;margin-top:10px;font-size:13.5px}
+.checks.ok{border-color:var(--line);color:var(--muted)}
+.checks summary{cursor:pointer;font-weight:500}
+.checks ul{margin:8px 0 0;padding-left:18px}
+.checks li{margin:3px 0;color:var(--muted)}
+.checks li .chip{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+.small{font-size:13px;color:var(--muted)}
+ul.amb{margin:0;padding-left:18px}
+.foot{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;font-size:14px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:var(--shadow);z-index:50}
+.toast.show{opacity:1}
+
+/* source entry pane: the coder must be able to check every quotation against the text */
+.srcwrap{position:sticky;top:calc(var(--headh, 78px) + 16px)}
+.srctabs{display:flex;gap:4px;margin-bottom:10px}
+.srctabs button{flex:1;padding:6px 8px;font-size:13px;border:1px solid var(--line);background:var(--paper-2);cursor:pointer;border-radius:4px;color:var(--muted)}
+.srctabs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:500}
+.entryview{max-height:62vh;overflow:auto;background:var(--paper-2);border:1px solid var(--line);border-radius:4px;padding:12px 14px;line-height:1.7;font-size:14px;word-break:break-word}
+/* the corpus hard-wraps its lines; let them reflow in this narrow column. Highlight offsets
+   are computed against the original string, so collapsing whitespace here is safe. */
+.entryview{white-space:normal}
+.entryview mark{background:var(--warn-soft);color:var(--ink);box-shadow:0 0 0 2px var(--warn-soft);border-bottom:2px solid var(--warn)}
+.entryview mark.hit{background:var(--accent-soft);border-bottom-color:var(--accent)}
+.srcmeta{font-size:12.5px;color:var(--muted);margin:8px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.srcfind{display:flex;gap:6px;margin-bottom:8px}
+.srcfind input{flex:1;background:var(--paper-2);border:1px solid var(--line);padding:6px 9px;border-radius:4px;font-size:13px}
+
+/* evidence becomes actionable: click to locate the quotation in the entry */
+.ev.clickable{cursor:pointer;border-left:2px solid var(--line);padding-left:8px;transition:border-color .12s,color .12s}
+.ev.clickable:hover{border-left-color:var(--accent);color:var(--ink)}
+.ev.missing{border-left-color:var(--fail);color:var(--fail);font-style:normal}
+.ev.missing:after{content:" — not found in the entry";font-style:normal;font-size:11.5px;letter-spacing:.02em;text-transform:uppercase;opacity:.85}
+
+/* section rail: seven sections, their review state, and a way to jump */
+.rail{position:sticky;top:calc(var(--headh, 78px) + 16px);align-self:start;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.rail a{display:flex;align-items:center;gap:8px;padding:6px 10px;color:var(--muted);text-decoration:none;border-left:2px solid var(--line);border-radius:0 4px 4px 0}
+.rail a:hover{color:var(--ink);background:var(--paper-2)}
+.rail a.done{color:var(--ink);border-left-color:var(--pass)}
+.rail a i{width:14px;height:14px;border:1.5px solid var(--line-strong);border-radius:50%;flex:0 0 auto;display:inline-block}
+.rail a.done i{background:var(--pass);border-color:var(--pass);position:relative}
+.rail a.done i:after{content:"";position:absolute;left:4px;top:1px;width:3px;height:7px;border:solid var(--paper);border-width:0 1.5px 1.5px 0;transform:rotate(42deg)}
+
+section.block{scroll-margin-top:calc(var(--headh, 78px) + 80px)}
+.blockhead h3{font-family:Fraunces,Georgia,serif;font-size:17px}
+.blockhead label.rev input{width:16px;height:16px;accent-color:var(--pass)}
+
+/* pool view */
+.filters{display:flex;gap:14px;flex-wrap:wrap;align-items:end;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.filters .field{min-width:150px}
+.filters .field select,.filters .field input{width:100%;background:var(--paper-2);border:1px solid var(--line);padding:6px 8px;border-radius:4px}
+table.pool{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);font-size:13.5px}
+/* The pool scrolls inside its own box rather than the page: at 518 rows that keeps the filters and
+   the column header in view. Sticky-vertical cannot work inside a horizontal-only scroll wrapper,
+   so the wrapper owns both axes and the header sticks to it. */
+.poolwrap{max-height:calc(100vh - var(--headh,78px) - 235px);min-height:320px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--paper);box-shadow:var(--shadow)}
+.poolwrap table.pool{border:0}
+table.pool th{text-align:left;font-weight:500;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);font-size:12.5px;white-space:nowrap;position:sticky;top:0;background:var(--paper);z-index:2;box-shadow:inset 0 -1px 0 var(--line)}
+table.pool td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.pool tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--paper-2) 55%,transparent)}
+table.pool tbody tr:hover td{background:var(--accent-soft)}
+table.pool td.name{font-family:Fraunces,Georgia,serif;font-size:16px;cursor:pointer;color:var(--accent)}
+.lv{display:inline-block;min-width:22px;text-align:center;padding:1px 5px;background:var(--chip);color:var(--chip-ink);border-radius:3px;font-weight:500}
+.lv.l0{background:var(--fail-soft);color:var(--fail)}.lv.l2{background:var(--pass-soft);color:var(--pass)}
+.tiny{font-size:12px;color:var(--muted)}
+.poolhead{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.poolhead .count{color:var(--muted)}
+.poolhead .btn{margin-left:auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>Carrying Mechanic <span>— selection workbench for traditional games</span></h1>
+  <div class="status"><span id="stSample"><i class="dot"></i>Claude</span><span id="stDb"><i class="dot"></i>Shared pool</span></div>
+  <div class="headright">
+    <nav role="tablist">
+      <button role="tab" aria-selected="true" data-view="record">Analyse a game</button>
+      <button role="tab" aria-selected="false" data-view="pool">Pool <span id="poolN"></span></button>
+      <button role="tab" aria-selected="false" data-view="eval">Evaluation</button>
+      <button role="tab" aria-selected="false" data-view="about">How it decides</button>
+    </nav>
+    <button class="themetog" id="themeBtn" title="Theme" aria-label="Theme">◐</button>
+  </div>
+</header>
+
+<main>
+<!-- ============ RECORD VIEW ============ -->
+<div class="view active" id="view-record">
+  <div class="record">
+    <aside class="panel srcwrap">
+      <div class="srctabs">
+        <button id="tabSource" aria-pressed="false" title="The entry this record was drafted from">Source entry</button>
+        <button id="tabPaste" aria-pressed="true" title="Draft a record from a new entry">Analyse new</button>
+      </div>
+      <div id="srcPane" style="display:none">
+        <div class="srcfind"><input id="entryFind" placeholder="Find in entry…" aria-label="Find in entry"><button class="btn secondary" id="entryClear" title="Clear highlights">Clear</button></div>
+        <div class="entryview" id="entryView"></div>
+        <p class="srcmeta" id="srcMeta"></p>
+      </div>
+      <div id="pastePane">
+      <input class="text" id="gameName" placeholder="Game name (Turkish, as in the entry)">
+      <div class="hint" style="margin:8px 0 6px">Paste the encyclopaedia entry. The model separates what the source says from what it infers, and quotes the source for every judgement.</div>
+      <textarea class="entry" id="entryText" placeholder="Paste the full entry here (Turkish or English)…"></textarea>
+      <div class="row">
+        <button class="btn" id="analyse">Extract record</button>
+        <button class="btn secondary" id="stop" disabled>Stop</button>
+        <select id="tier" title="Model effort"><option value="default">Default effort</option><option value="complex">High effort</option><option value="quick">Quick draft</option></select>
+      </div>
+      <div class="think" id="think"></div>
+      <div class="hint">The extraction is a draft. Every field can be edited; nothing enters the pool as "reviewed" until a coder marks each section.</div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn secondary" id="newRecord">New blank record</button>
+        <button class="btn secondary" id="loadSample">Load worked example</button>
+      </div>
+      </div>
+    </aside>
+    <nav class="rail" id="rail" aria-label="Sections"></nav>
+
+    <div class="panel sheet" id="sheet">
+      <div class="empty" id="emptySheet">No record yet. Paste an entry and extract, or load the worked example to see the shape of a finished record.</div>
+      <div id="sheetBody" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POOL VIEW ============ -->
+<div class="view" id="view-pool">
+  <div class="filters">
+    <div class="field"><label>Route</label><select id="fRoute"><option value="">Any</option><option>R1</option><option>R2</option><option>R3</option></select></div>
+    <div class="field"><label>Survives on screen (S)</label><select id="fS"><option value="">Any</option><option value="kept">Kept</option><option value="kt">Kept or transformed</option></select></div>
+    <div class="field"><label>Survives with sensors (M)</label><select id="fM"><option value="">Any</option><option value="kept">Kept</option><option value="kt">Kept or transformed</option></select></div>
+    <div class="field"><label>Intrinsic objective (LOM)</label><select id="fLOM"><option value="">Any</option><option value="1">≥ 1</option><option value="2">= 2</option></select></div>
+    <div class="field"><label>Distinctiveness</label><select id="fD"><option value="">Any</option><option value="D2">D2 only</option><option value="D12">D1 or D2</option><option value="unset">Not set yet</option></select></div>
+    <div class="field"><label>Status</label><select id="fRev"><option value="">Any</option><option value="rev">Fully reviewed</option><option value="elig">Eligible as worked example</option></select></div>
+    <div class="field" style="flex:1"><label>Search</label><input id="fQ" placeholder="name, mechanic, objective…"></div>
+  </div>
+  <div class="poolhead"><h2 style="margin:0;font-size:16px;font-weight:600">Candidate pool</h2><span class="count" id="poolCount"></span><button class="btn secondary" id="importBtn">Import records</button><button class="btn secondary" id="exportBtn" style="margin-left:6px">Copy pool as JSON</button></div>
+  <div class="panel" id="importBox" style="display:none;margin-bottom:16px"><h2>Paste a JSON array of records (or one record)</h2><textarea class="entry" id="importText" style="min-height:140px"></textarea><div class="row"><button class="btn" id="importGo">Add to pool</button><button class="btn secondary" id="importCancel">Cancel</button></div><div class="hint">Imported records keep their review state. A record with the same id replaces the existing one.</div></div>
+  <div class="poolwrap">
+  <table class="pool">
+    <thead><tr><th>Game</th><th>Route</th><th>Gates</th><th>MC</th><th>LOM</th><th>AGE</th><th>CT-a</th><th>S</th><th>M</th><th>L</th><th>D</th><th>Objective found</th><th>Eligible</th><th>Review</th><th></th></tr></thead>
+    <tbody id="poolBody"></tbody>
+  </table>
+  </div>
+  <p class="hint" id="poolEmpty" style="display:none">The pool is empty. Analyse a game and save it, or load the worked example.</p>
+</div>
+
+<!-- ============ EVAL VIEW ============ -->
+<div class="view" id="view-eval">
+  <div class="panel" style="margin-bottom:16px"><h2>1. Extraction accuracy: model draft against the adjudicated record</h2>
+    <p class="small">Only records with a stored model draft and all sections reviewed count. This measures the assistive system, not the rubric.</p>
+    <div style="overflow-x:auto"><table class="pool" id="evAcc"></table></div></div>
+  <div class="panel" style="margin-bottom:16px"><h2>2. Rubric reliability: first coder against second coder</h2>
+    <p class="small">Only records with a second coding count. Percentage agreement and Cohen's κ per field. This is the instrument's reliability, independent of the model.</p>
+    <div style="overflow-x:auto"><table class="pool" id="evKappa"></table></div></div>
+  <div class="panel"><h2>3. Pool summary (adjudicated records)</h2><div id="evSummary" class="small"></div>
+    <div class="row"><button class="btn secondary" id="evCopy">Copy evaluation as JSON</button></div></div>
+</div>
+
+<!-- ============ ABOUT VIEW ============ -->
+<div class="view" id="view-about">
+  <div class="panel" style="max-width:820px">
+    <h2 style="font-size:15px;color:var(--ink)">What the workbench does, and what it does not</h2>
+    <p>Each game passes through six parts in order. The output is a record, not a score.</p>
+    <ol>
+      <li><strong>Carrying mechanic.</strong> The rule element without which this is a different game. Everything below is judged against it.</li>
+      <li><strong>Gates.</strong> G1 a rule system with a defined end state. G2 a bounded session without unrepresentable equipment. G3 the carrying mechanic is kept or transformed under at least one interface class: S screen-only touch, M motion or sensor, L location or co-located.</li>
+      <li><strong>Route.</strong> R1 needs an opponent and produces a winner. R2 closes without a winner and can be played alone. R3 has a making layer where the constructed object decides performance. Decided by test, not keywords: remove the second player; is there a build phase.</li>
+      <li><strong>Dimensions, 0–2 with a written descriptor.</strong> MC rule decomposability. LOM the counterfactual: remove the educational content, does the same strategy still win. AGE which developmental competence the mechanic depends on and whether it carries a native scaling parameter. CT-a legibility from the rules alone; CT-b and CT-c recorded, not scored.</li>
+      <li><strong>Ledger.</strong> For each rule and material element: kept, transformed, substituted, removed, added under the target class. The S column of the DIG profile is read off this table.</li>
+      <li><strong>Distinctiveness.</strong> D0 rule-for-rule counterpart found, D1 family counterpart with a differing rule, D2 none found. The model does not assign a level (instrument v0.5): it cannot browse, so it gives a search hypothesis only. A separate, logged retrieval step finds candidates and retains a counterpart only if it has a resolvable identifier (Ludii, BoardGameGeek, Wikipedia). The coder reviews the log, confirms or overrides the counterpart, assigns the level and sets verified.</li>
+    </ol>
+    <p><strong>Eligibility as a worked example</strong> requires MC ≥ 1, LOM ≥ 1, DIG ≥ transformed under the target class, CT-a ≥ 1, and all sections reviewed by a coder. Nothing compensates for a failed minimum.</p>
+    <p><strong>Division of labour.</strong> The model reads consistently, quotes the source, drafts the ledger and names ambiguities. The human decides. Scores used in a paper are the reviewed ones; the raw extraction is kept alongside so agreement can be measured on a gold set.</p>
+    <p class="small">Records are stored in the shared pool for everyone in the organisation who opens this page. The pool is organisation-internal and cannot be shared publicly.</p>
+  </div>
+</div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- instrument text used in the prompt ---------------- */
+const INSTRUMENT = `You are applying a selection instrument for traditional games to ONE encyclopaedia entry. Judge the game's carrying mechanic, not the adaptation you could imagine. Quote the source for every judgement; where the source is silent, say so in "ambiguities" and lower the confidence.
+
+PARTS
+1 carryingMechanic: the rule element without which this is a different game. One sentence.
+2 gates (pass/fail, each with a reason and a quote):
+  G1 ruleSystem: entry documents rules with a defined end state (win, closure, completed object). Fails for free play, imitation without end state, entries recording only a rhyme.
+  G2 boundedSession: one play completes in one sitting by the documented player count without equipment a mini-game cannot represent (livestock, vehicles, water bodies, unbounded terrain fail).
+  G3 survival: the carrying mechanic SURVIVES under at least one of TWO interface classes: S screen-only touch, or M motion/sensor (phone in pocket, camera, wearables). A class counts as surviving when the operation is Kept or Transformed, OR when it is Substituted and the substitution test for that class passes. This is the same survival predicate the eligibility rule uses, so a game cannot be eligible on a class that does not carry the gate. List the classes under which it survives; "classes" must not be empty when G3 passes.
+  L location/co-located (players share a space, phone is a referee or prop) is NOT part of this gate and cannot carry a pass. Under a co-located setup the physical game is played unchanged, so L cannot show that a game survives digitisation. Record L separately under part 5 as a proposed setup with a feasibility judgement, not as Kept/Transformed/Substituted/Removed.
+3 route: R1 contest (remove the second player: no longer playable), R2 closure (still playable alone, defined end, no winner), R3 construction (a phase in which the player makes an object whose properties feed back into the outcome). Give primary, optional secondary, and the test result in one sentence.
+4 dimensions, 0-2 each, with the descriptor you matched and a quote:
+  MC rule decomposability: 0 a core step depends on human judgement/negotiation not statable as a rule; 1 decomposes but the entry records incompatible cores or an under-specified step; 2 decomposes fully into discrete elements.
+  LOM intrinsic objective (domain-general education): name the learning behaviour the mechanic exercises, then remove that content. 0 same strategy still wins (the content would be a label); 1 strategy changes but game remains winnable; 2 the game collapses, the learning behaviour IS the winning behaviour. Record "objective" as a short noun phrase (e.g. parity, sequencing, phonological segmentation, spatial planning, counting, probability estimation).
+  AGE developmental dependency: 0 depends on a competence with a narrow window (reaction time, fine motor precision) and has no native difficulty parameter; 1 difficulty varies only through external parameters (timer, list length); 2 the mechanic carries a native scaling parameter (board size, piece count, chain length). Record "competence" and "parameter".
+  CTa legibility: 0 rules cannot be followed without cultural knowledge absent from the rules; 1 playable with a one-line gloss; 2 legible from the rules alone.
+  CTb content dependence (recorded, higher is not better): 0 no culturally specific content; 1 present but detachable; 2 load-bearing (the rhyme, riddle or object IS the mechanic).
+  CTc community relation (recorded): 0 documented only; 1 dormant or regional; 2 living practice with a community or federation.
+5 dig profile: for each class S, M, L say what happens to the carrying mechanic. Kept: the player performs the same game-defining skill and the device changes nothing about how it is performed. Transformed: the player still performs the same game-defining skill, or solves the same game-defining problem, but the device senses, mediates or approximates that action differently (step detection for hopping; proximity sensing instead of physical pressure). Substituted: the game-defining skill or problem is replaced by a different player capability, even if the rules, targets, setting or theme are retained (moving an avatar with a finger in place of running and feinting). Removed: the element is gone. One note each. The skill you judge is the one you wrote in carryingMechanic, not any other competence the game also exercises.
+5a substitutionTest: only for classes marked Substituted. S decides eligibility; S and M both feed gate G3; L feeds neither. Ask: does the player still solve the same game-defining problem, AND would competence in the carryingMechanic skill plausibly transfer to the substitute? Both must hold. 1 accept: the means of action changed but the problem and the transferable competence did not (anchor: Araya Aldirmaca on screen - agility is lost, but pincer positioning, deception, route choice and the enclose-before-safety problem survive). 0 reject: the original competence is replaced and does not transfer (anchor: Birdir Bir on screen - jumping, bodily clearance, balance and landing do not transfer to tapping). Record pass true/false and a one-line reason. Note that a high-level decision surviving (attack, escape, score) is not sufficient; the competence itself must plausibly transfer.
+6 ledger: 5-10 rows. Each row: element (a rule or material element), type (Rule | Rule (carrying) | Material | Social), original (as in the source), underS (what it becomes on a touch screen), operation (Kept | Transformed | Substituted | Removed | Added), note.
+7 distinctiveness (search hypothesis only): do NOT assign D0, D1 or D2; leave "level" null. Give "closest" (the counterpart or family you would check first), "separatingRule" (the core rule you expect to differ, or empty), and "searchQueries" (names, alternative names and family terms to search in the Ludii Games Database, BoardGameGeek, Parlett and Wikipedia EN/TR). You cannot browse, so this is a hypothesis for the retrieval step, not a classification.
+8 ambiguities: operational parameters the source leaves unspecified (arena size, contact criteria, reset procedure, time limits, scoring).
+9 confidence: overall 0-1 and a list of field names you are least sure about.
+
+Return ONLY a JSON object with exactly this shape (no prose, no markdown):
+{"name":"","altNames":"","source":{"region":"","players":"","session":""},
+"carryingMechanic":{"text":"","evidence":""},
+"gates":{"G1":{"pass":true,"reason":"","evidence":""},"G2":{"pass":true,"reason":"","evidence":""},"G3":{"pass":true,"reason":"","classes":["S"],"evidence":""}},
+"route":{"primary":"R1","secondary":"","test":""},
+"dimensions":{"MC":{"level":2,"descriptor":"","evidence":""},"LOM":{"level":1,"objective":"","counterfactual":"","evidence":""},"AGE":{"level":1,"competence":"","parameter":"","evidence":""},"CTa":{"level":2,"evidence":""},"CTb":{"level":1,"note":""},"CTc":{"level":1,"note":""}},
+"dig":{"S":{"op":"Kept","note":"","substitutionTest":{"pass":null,"reason":""}},"M":{"op":"Kept","note":""},"L":{"op":"Kept","note":""}},
+"ledger":[{"element":"","type":"Rule","original":"","underS":"","operation":"Kept","note":""}],
+"distinctiveness":{"level":null,"closest":"","separatingRule":"","searchQueries":[""],"counterpart":{"idType":"","id":"","url":""},"searchLog":{"date":"","languages":[],"sources":[],"queries":[],"candidatesInspected":[],"closestMatch":"","separatingRule":""},"verified":false},
+"ambiguities":[""],
+"confidence":{"overall":0.7,"low":[""]}}
+`;
+
+/* ---------------- worked example (a human-reviewed record, not model output) ---------------- */
+const SAMPLE = {
+ id:"seksek", name:"Seksek Oyunu", altNames:"hopscotch family; Lebbiyh (variant)",
+ source:{region:"Attested in more than fifteen provinces",players:"1 or more, in turn",session:"Minutes"},
+ carryingMechanic:{text:"Hopping on one foot through a numbered grid in sequence, skipping the square holding the thrown stone, without stepping on a line.",evidence:"the player hops on one foot through the squares and retrieves it"},
+ gates:{G1:{pass:true,reason:"Defined end: completing all squares.",evidence:"A stone is thrown onto numbered squares"},G2:{pass:true,reason:"Chalk and a stone; one sitting.",evidence:""},G3:{pass:true,reason:"Substituted under S, transformed under M (step detection), kept under L (phone as referee).",classes:["M","L"],evidence:""}},
+ route:{primary:"R2",secondary:"",test:"Remove the second player: still playable alone with a defined end and no winner."},
+ dimensions:{MC:{level:2,descriptor:"Decomposes fully: throw to square n, hop sequence, skip n, no line contact, retrieve.",evidence:""},LOM:{level:1,objective:"sequencing and balance",counterfactual:"Remove numbering: the hop sequence still wins; remove balance demand: the game collapses. Balance is motor, not educational; sequencing constrains but does not decide.",evidence:""},AGE:{level:2,competence:"single-leg balance (age 5+)",parameter:"grid length and shape",evidence:"attested in many grid variants"},CTa:{level:2,evidence:""},CTb:{level:0,note:"Numbering and grid carry no cultural content."},CTc:{level:2,note:"Living practice across Türkiye and internationally."}},
+ dig:{S:{op:"Substituted",note:"Tap-through of squares keeps the grid and loses the hop."},M:{op:"Transformed",note:"Step detection enforces one-foot hops; line faults not detectable."},L:{op:"Kept",note:"Real grid, phone as caller and scorekeeper."}},
+ ledger:[
+  {element:"Numbered grid",type:"Material",original:"Chalk on ground, 6-10 squares",underS:"Drawn grid",operation:"Kept",note:""},
+  {element:"Throw stone to square n",type:"Rule",original:"Underarm throw, must land inside",underS:"Flick to square",operation:"Transformed",note:"Aim becomes timing"},
+  {element:"Hop through grid on one foot",type:"Rule (carrying)",original:"Balance and sequence; stepping on a line ends the turn",underS:"Tap squares in order",operation:"Substituted",note:"Balance test gone; sequencing remains"},
+  {element:"Skip the square holding the stone",type:"Rule",original:"Must jump over it",underS:"Square disabled",operation:"Kept",note:""},
+  {element:"Retrieve stone on return",type:"Rule",original:"Bend while balancing",underS:"Auto-collect",operation:"Removed",note:""},
+  {element:"Line judge",type:"Social",original:"Other players call faults",underS:"System detects",operation:"Substituted",note:"Player-negotiated rule lost"},
+  {element:"Progress marker",type:"Material",original:"None",underS:"Level counter",operation:"Added",note:""}],
+ distinctiveness:{level:"D0",closest:"Hopscotch (EN), Escargot (FR), Himmel und Hölle (DE)",separatingRule:"",searchNote:"Checked: Wikipedia EN/TR, Parlett. Rule-for-rule match on the single-square variant.",verified:true},
+ ambiguities:["Grid shape varies by province; the entry does not fix one.","Whether the stone may be thrown into any square or only the next in sequence."],
+ confidence:{overall:0.9,low:[]},
+ review:{coder:"C1",sections:{mechanic:true,gates:true,route:true,dimensions:true,dig:true,ledger:true,distinct:true},notes:"Worked example used to calibrate DIG(S)=0.",raw:null,updated:Date.now()}
+};
+
+/* ---------------- state ---------------- */
+let sample=null, db=null, records={}, current=null, ctl=null, unsub=null;
+const $=s=>document.querySelector(s);
+const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)};
+const slug=s=>(s||"game").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"game";
+/* Instrument v0.5: a D level is one of these or null ("not assigned yet"). Declared up here
+   because the boot block below renders the pool before the rest of the script has run. */
+const DLEVELS=["D0","D1","D2"];
+const dLabel=l=>DLEVELS.includes(l)?l:"D unset";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* local fallback when db is unavailable */
+function loadLocal(){try{const j=localStorage.getItem("cm-records");if(j)records=JSON.parse(j)}catch(e){}}
+function saveLocal(){try{localStorage.setItem("cm-records",JSON.stringify(records))}catch(e){}}
+
+
+/* ---------------- theme: system / light / dark ---------------- */
+const THEMES=["system","light","dark"], THEME_ICON={system:"◐",light:"☀",dark:"☾"};
+let theme="system"; try{theme=localStorage.getItem("cm-theme")||"system"}catch(e){}
+function applyTheme(t){
+  const root=document.documentElement;
+  if(t==="light"||t==="dark")root.setAttribute("data-theme",t); else root.removeAttribute("data-theme");
+  const b=document.getElementById("themeBtn");
+  if(b){b.textContent=THEME_ICON[t];const l="Theme: "+t+" (click to change)";b.title=l;b.setAttribute("aria-label",l);}
+}
+applyTheme(theme);
+if(new URLSearchParams(location.search).get("coder2")==="1")
+  document.documentElement.classList.add("coder2-pending");   // body may not exist yet
+window.addEventListener("DOMContentLoaded",()=>{
+  if(document.documentElement.classList.contains("coder2-pending"))document.body.classList.add("coder2");
+});
+
+/* sticky offsets depend on the real header height, which wraps at narrow widths */
+function measureHead(){
+  const h=document.querySelector("header");
+  if(h)document.documentElement.style.setProperty("--headh",h.offsetHeight+"px");
+}
+window.addEventListener("load",measureHead);
+window.addEventListener("resize",()=>{clearTimeout(window.__mH);window.__mH=setTimeout(measureHead,120);});
+
+/* ---------------- REST adapter (standalone backend) ---------------- */
+const REST=location.protocol.startsWith("http")&&!(window.claude&&claude.use);
+let META={};
+function restSample(){
+  const fn=async()=>{throw {code:"invalid_argument",message:"use .json"}};
+  fn.json=async(prompt,opts={})=>{
+    // the backend owns the prompt; we send only name + entry + tier
+    const name=$("#gameName").value.trim(), entry=$("#entryText").value.trim();
+    const ctrl=opts.signal;
+    const res=await fetch("/api/extract",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,entry,tier:opts.modelTier||"default"}),signal:ctrl});
+    if(!res.ok){const t=await res.text();throw {code:res.status===502?"invalid_json":"unavailable",message:t};}
+    const j=await res.json(); fn.lastMeta=j.meta; fn.lastFlags=j.flags||null; return j.draft;
+  };
+  return fn;
+}
+function restDb(){
+  const listeners=[];
+  const api={collection:(name)=>({
+    doc:(id)=>({
+      set:async(data)=>{await fetch(`/api/records/${encodeURIComponent(id)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});refresh();},
+      delete:async()=>{await fetch(`/api/records/${encodeURIComponent(id)}`,{method:"DELETE"});refresh();}
+    }),
+    onSnapshot:(cb,err)=>{listeners.push(cb);refresh();const t=setInterval(refresh,8000);return()=>{clearInterval(t)}}
+  })};
+  async function refresh(){try{const res=await fetch("/api/records");if(!res.ok)return;const arr=await res.json();const snap={docs:arr.map(d=>({id:d.id,data:()=>d}))};listeners.forEach(cb=>cb(snap));}catch(e){}}
+  return api;
+}
+
+/* ---------------- boot ---------------- */
+(async()=>{
+  loadLocal(); renderPool();
+  if(REST){
+    try{META=await (await fetch("/api/meta")).json();}catch(e){META={};}
+    sample=restSample(); db=restDb();
+    $("#stSample").innerHTML=`<i class="dot on"></i>Model: ${esc(META.provider||"?")} · instrument ${esc(META.instrument||"?")}`;
+    $("#stDb").innerHTML='<i class="dot on"></i>Server pool';
+    unsub=db.collection("games").onSnapshot(snap=>{records={};snap.docs.forEach(d=>{records[d.id]=d.data()});renderPool();});
+  } else if(window.claude&&claude.use){
+    sample=await claude.use("sample");
+    if(sample){$("#stSample").innerHTML='<i class="dot on"></i>Claude ready'} else {$("#stSample").innerHTML='<i class="dot"></i>Claude unavailable here'; $("#analyse").disabled=true;}
+    db=await claude.use("db");
+    if(db){
+      $("#stDb").innerHTML='<i class="dot on"></i>Shared pool';
+      unsub=db.collection("games").onSnapshot(snap=>{records={};snap.docs.forEach(d=>{records[d.id]=d.data()});renderPool();},err=>{$("#stDb").innerHTML='<i class="dot"></i>Pool offline, local only';db=null;});
+    } else {$("#stDb").innerHTML='<i class="dot"></i>Local pool (this browser)';}
+  } else {$("#stSample").innerHTML='<i class="dot"></i>Open in Claude to extract';$("#analyse").disabled=true;$("#stDb").innerHTML='<i class="dot"></i>Local pool (this browser)';}
+})();
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+b.dataset.view));
+  if(b.dataset.view==="pool")renderPool();
+  if(b.dataset.view==="eval")renderEval();
+});
+
+/* ---------------- evaluation ---------------- */
+const EVF={route:r=>r.route?.primary,MC:r=>String(r.dimensions?.MC?.level),LOM:r=>String(r.dimensions?.LOM?.level),AGE:r=>String(r.dimensions?.AGE?.level),CTa:r=>String(r.dimensions?.CTa?.level),S:r=>r.dig?.S?.op,M:r=>r.dig?.M?.op,L:r=>r.dig?.L?.op,D:r=>r.distinctiveness?.level,G1:r=>String(r.gates?.G1?.pass),G2:r=>String(r.gates?.G2?.pass),G3:r=>String(r.gates?.G3?.pass)};
+function kappa(a,b){const n=a.length;if(!n)return null;const cats=[...new Set([...a,...b])];let po=0;for(let i=0;i<n;i++)if(a[i]===b[i])po++;po/=n;let pe=0;for(const c of cats)pe+=(a.filter(x=>x===c).length/n)*(b.filter(x=>x===c).length/n);return pe>=1?null:(po-pe)/(1-pe)}  // pe==1: no variance, kappa undefined
+function renderEval(){
+  const all=Object.values(records);
+  const done=all.filter(r=>r.review?.raw&&eligibility(r).reviewed===eligibility(r).total);
+  let h='<thead><tr><th>Field</th><th>Agree</th><th>Accuracy</th><th>Disagreements (draft → adjudicated)</th></tr></thead><tbody>';
+  for(const f of Object.keys(EVF)){let ok=0;const dis=[];done.forEach(r=>{const m=EVF[f](normalise(r.review.raw,r.name)),hv=EVF[f](r);if(m===hv)ok++;else dis.push(esc(r.name)+": "+esc(m)+" → "+esc(hv))});
+    h+=`<tr><td>${f}</td><td>${ok}/${done.length}</td><td>${done.length?(ok/done.length).toFixed(2):"–"}</td><td class="tiny">${dis.join("; ")}</td></tr>`}
+  $("#evAcc").innerHTML=h+"</tbody>"+(done.length?"":'<tfoot><tr><td colspan="4" class="tiny">No fully reviewed records with a stored draft yet.</td></tr></tfoot>');
+  const two=all.filter(r=>r.review2&&r.review2.coder&&eligibility(r).reviewed===eligibility(r).total);
+  let k='<thead><tr><th>Field</th><th>Agree</th><th>κ</th><th>Disagreements (coder 1 / coder 2)</th></tr></thead><tbody>';
+  for(const f of ["route","MC","LOM","AGE","CTa","S","D"]){const rows=two.filter(r=>r.review2[f]!==""&&r.review2[f]!=null);const a=rows.map(r=>String(EVF[f](r))),b=rows.map(r=>String(r.review2[f]));let ok=0;const dis=[];a.forEach((v,i)=>{if(v===b[i])ok++;else dis.push(esc(rows[i].name)+": "+v+" / "+b[i])});
+    k+=`<tr><td>${f}</td><td>${ok}/${rows.length}</td><td>${kappa(a,b)?.toFixed(2) ?? "–"}</td><td class="tiny">${dis.join("; ")}</td></tr>`}
+  $("#evKappa").innerHTML=k+"</tbody>"+(two.length?"":'<tfoot><tr><td colspan="4" class="tiny">No records with a second coding yet.</td></tr></tfoot>');
+  const rev=all.filter(r=>eligibility(r).reviewed===eligibility(r).total);
+  const cnt=(arr,fn)=>arr.reduce((a,r)=>{const v=fn(r);a[v]=(a[v]||0)+1;return a},{});
+  const gateFail=rev.filter(r=>!(r.gates.G1.pass&&r.gates.G2.pass&&r.gates.G3.pass));
+  const lost=rev.filter(r=>ORDER[r.dig.S.op]<2), hyb=rev.filter(r=>eligibility(r).hybrid), lom0=rev.filter(r=>+r.dimensions.LOM.level<1), el=rev.filter(r=>eligibility(r).ok);
+  $("#evSummary").innerHTML=`<p>${rev.length} fully reviewed of ${all.length} records.</p>
+   <p>Gate rejections: ${gateFail.length} ${gateFail.map(r=>esc(r.name)).join(", ")}<br>Lost on screen (S substituted or removed): ${lost.length} ${lost.map(r=>esc(r.name)).join(", ")}<br>Hybrid candidates: ${hyb.length} ${hyb.map(r=>esc(r.name)).join(", ")}<br>No intrinsic objective (LOM 0): ${lom0.length} ${lom0.map(r=>esc(r.name)).join(", ")}<br>Eligible as screen worked example: ${el.length} ${el.map(r=>esc(r.name)).join(", ")}</p>
+   <p>Routes ${JSON.stringify(cnt(rev,r=>r.route.primary))} · Distinctiveness ${JSON.stringify(cnt(rev,r=>r.distinctiveness.level||"unset"))} · S ${JSON.stringify(cnt(rev,r=>r.dig.S.op))} · M ${JSON.stringify(cnt(rev,r=>r.dig.M.op))} · L ${JSON.stringify(cnt(rev,r=>r.dig.L.op))}</p>`;
+  $("#evCopy").onclick=()=>{const out={n:all.length,reviewed:rev.length,records:all.map(r=>({id:r.id,name:r.name,draft:r.review?.raw?Object.fromEntries(Object.keys(EVF).map(f=>[f,EVF[f](normalise(r.review.raw,r.name))])):null,adjudicated:Object.fromEntries(Object.keys(EVF).map(f=>[f,EVF[f](r)])),coder2:r.review2||null,coder:r.review?.coder||""}))};navigator.clipboard.writeText(JSON.stringify(out,null,2)).then(()=>toast("Evaluation copied"))};
+}
+
+/* ---------------- extraction ---------------- */
+$("#analyse").onclick=async()=>{
+  const entry=$("#entryText").value.trim(); if(!entry){toast("Paste an entry first");return;}
+  const name=$("#gameName").value.trim();
+  ctl=new AbortController(); $("#analyse").disabled=true;$("#stop").disabled=false;
+  const th=$("#think"); th.style.display="block"; th.textContent="Thinking…";
+  try{
+    const prompt=INSTRUMENT+"\n\nGAME NAME (as given): "+(name||"(not given; take it from the entry)")+"\n\nENTRY:\n"+entry;
+    const data=await sample.json(prompt,{modelTier:$("#tier").value,signal:ctl.signal,cache:false,onText:({text})=>{th.textContent=text.slice(-1200)}});
+    th.style.display="none";
+    const fd=freshDraft(data,name,sample.lastFlags||null);
+    current=fd.record; current.review={coder:"",sections:{},notes:"",raw:JSON.parse(JSON.stringify(data)),entry:entry,updated:Date.now(),meta:sample.lastMeta||null,flags:fd.flags};
+    dirty=false;
+    renderSheet(); toast("Draft record extracted. Review each section.");
+  }catch(e){
+    th.style.display="none";
+    const msg={cancelled:"Stopped.",not_granted:"Claude access was declined for this page.",rate_limited:"Too many requests; wait a moment.",invalid_json:"The model did not return a valid record. Try again or use High effort."}[e.code]||("Extraction failed ("+(e.code||"unknown")+").");
+    toast(msg);
+  }finally{$("#analyse").disabled=!sample;$("#stop").disabled=true;ctl=null;}
+};
+$("#stop").onclick=()=>ctl&&ctl.abort();
+
+/* Instrument v0.5: a FRESH model draft never carries a D level. If the model emitted one it is
+   dropped from the record body and flagged; review.raw keeps the model's output verbatim
+   (design rule 3). Stored records are never passed through this, only new extractions. */
+function freshDraft(d,name,flags){
+  const had=d&&d.distinctiveness&&d.distinctiveness.level, ver=!!(d&&d.distinctiveness&&d.distinctiveness.verified);
+  const r=normalise(d,name);
+  r.distinctiveness.level=null; r.distinctiveness.verified=false;
+  let f=flags?JSON.parse(JSON.stringify(flags)):null;
+  const add=k=>{f=f||{};f.humanOnly=f.humanOnly||[];if(!f.humanOnly.includes(k))f.humanOnly.push(k);};
+  if(had!=null&&had!=="")add("distinctiveness.level");
+  if(ver)add("distinctiveness.verified");
+  return {record:r,flags:f};
+}
+function normalise(d,name){
+  const r=JSON.parse(JSON.stringify(d||{}));
+  r.name=r.name||name||"Untitled"; r.id=slug(r.name);
+  r.altNames=Array.isArray(r.altNames)?r.altNames.filter(Boolean).join("; "):(r.altNames||"");
+  r.source=Object.assign({region:"",players:"",session:""},r.source||{});
+  r.carryingMechanic=Object.assign({text:"",evidence:""},r.carryingMechanic||{});
+  const g=r.gates||{}; r.gates={G1:Object.assign({pass:true,reason:"",evidence:""},g.G1||{}),G2:Object.assign({pass:true,reason:"",evidence:""},g.G2||{}),G3:Object.assign({pass:true,reason:"",classes:[],evidence:""},g.G3||{})};
+  r.route=Object.assign({primary:"R1",secondary:"",test:""},r.route||{});
+  const dm=r.dimensions||{}; r.dimensions={
+    MC:Object.assign({level:1,descriptor:"",evidence:""},dm.MC||{}),LOM:Object.assign({level:1,objective:"",counterfactual:"",evidence:""},dm.LOM||{}),
+    AGE:Object.assign({level:1,competence:"",parameter:"",evidence:""},dm.AGE||{}),CTa:Object.assign({level:1,evidence:""},dm.CTa||{}),
+    CTb:Object.assign({level:1,note:""},dm.CTb||{}),CTc:Object.assign({level:1,note:""},dm.CTc||{})};
+  const dg=r.dig||{}; r.dig={S:Object.assign({op:"Transformed",note:""},dg.S||{}),M:Object.assign({op:"Transformed",note:""},dg.M||{}),L:Object.assign({op:"Kept",note:""},dg.L||{})};
+  r.ledger=Array.isArray(r.ledger)?r.ledger.map(x=>Object.assign({element:"",type:"Rule",original:"",underS:"",operation:"Kept",note:""},x)):[];
+  // v0.5: no default level. null means "not assigned yet"; records made under v0.1-v0.4 keep the
+  // level and the searchNote they were stored with.
+  r.distinctiveness=Object.assign({level:null,closest:"",separatingRule:"",searchQueries:[],searchNote:"",counterpart:null,searchLog:null,verified:false},r.distinctiveness||{});
+  r.distinctiveness.searchQueries=Array.isArray(r.distinctiveness.searchQueries)?r.distinctiveness.searchQueries.filter(Boolean):[];
+  r.ambiguities=Array.isArray(r.ambiguities)?r.ambiguities.filter(Boolean):[];
+  r.confidence=Object.assign({overall:0.5,low:[]},r.confidence||{});
+  return r;
+}
+
+/* ---------------- eligibility ---------------- */
+const ORDER={Kept:3,Transformed:2,Substituted:1,Removed:0};
+/* Instrument v0.2: Substituted is conditional on the substitution test, not an automatic fail.
+   Must stay identical to backend/evaluate.py survives() and eval.js (design rule 6). */
+function survives(d){
+  if(!d)return false;
+  if(ORDER[d.op]>=2)return true;
+  if(d.op!=="Substituted")return false;
+  return !!(d.substitutionTest&&d.substitutionTest.pass);
+}
+function eligibility(r){
+  const fails=[];
+  if(!(r.gates.G1.pass&&r.gates.G2.pass&&r.gates.G3.pass))fails.push("a gate");
+  if(+r.dimensions.MC.level<1)fails.push("MC < 1");
+    // LOM is the relation between a game and a stated educational objective, so it does not gate
+    // the core decision. Where an objective is supplied it applies as a further pedagogical filter.
+  if(!survives(r.dig.S))fails.push("does not survive on screen");
+  if(+r.dimensions.CTa.level<1)fails.push("CT-a < 1");
+  const secs=["mechanic","gates","route","dimensions","dig","ledger","distinct"];
+  const reviewed=secs.filter(s=>r.review&&r.review.sections&&r.review.sections[s]).length;
+  const eduFails=(+r.dimensions.LOM.level<1)?fails.concat(["LOM < 1"]):fails;
+    return {ok:fails.length===0&&reviewed===secs.length,fails,reviewed,total:secs.length,hybrid:!survives(r.dig.S)&&survives(r.dig.M),educationalOk:eduFails.length===0&&reviewed===secs.length,educationalFails:eduFails}  // v0.3: L dropped from the gate and the hybrid flag;
+}
+
+/* ---------------- verdict, checks, unsaved state ---------------- */
+let dirty=false;
+function markDirty(){if(!dirty){dirty=true;renderVerdictOnly();}}
+
+function verdictHtml(r){
+  const e=eligibility(r), pct=Math.round(100*e.reviewed/e.total);
+  return `<strong>${e.ok?"Eligible as worked example":e.fails.length?"Not eligible":"Awaiting review"}</strong>`
+    +e.fails.map(f=>`<span class="chip fail">${esc(f)}</span>`).join("")
+    +(e.hybrid?`<span class="chip warn">hybrid candidate: lost on screen, survives with sensors</span>`:"")
+    +`<span class="chip">${esc(r.route.primary)}${r.route.secondary?" + "+esc(r.route.secondary):""}</span>`
+    +`<span class="chip">${dLabel(r.distinctiveness.level)}${r.distinctiveness.verified?"":" (unverified)"}</span>`
+    +`<span class="prog" role="img" aria-label="${e.reviewed} of ${e.total} sections reviewed"><i style="width:${pct}%"></i></span>`
+    +`<span class="small">${e.reviewed}/${e.total} reviewed</span>`
+    +(dirty?`<span class="unsaved">\u25CF unsaved</span>`:"");
+}
+
+/* Which model, instrument version and prompt produced this draft, and whether the instrument has
+   moved on since. `stale` means the record was drafted under an older instrument: its values are
+   not wrong, they were made against different descriptors. */
+function isStale(r){
+  const v=r.review&&r.review.meta&&r.review.meta.instrument;
+  return !!(v && META.instrument && v!==META.instrument);
+}
+function provHtml(r){
+  const m=(r.review&&r.review.meta)||{};
+  if(!m.provider&&!m.instrument)return "";
+  const stale=isStale(r);
+  return `<div class="prov">
+    ${m.provider?`<span>model <code>${esc(m.provider)}</code></span>`:""}
+    ${m.tier?`<span>tier <code>${esc(m.tier)}</code></span>`:""}
+    ${m.instrument?`<span>instrument <code>${esc(m.instrument)}</code></span>`:""}
+    ${m.promptHash?`<span>prompt <code>${esc(m.promptHash)}</code></span>`:""}
+    ${(r.review&&r.review.priorRaw&&r.review.priorRaw.length)?`<span>${r.review.priorRaw.length} earlier draft${r.review.priorRaw.length===1?"":"s"}</span>`:""}
+    ${stale?`<span class="stale">drafted under ${esc(m.instrument)}; current is ${esc(META.instrument)}</span>
+             <button class="btn secondary" id="reextract">Re-extract</button>`:""}
+    ${r.review&&r.review.needsRecheck?`<span class="stale">re-extracted &mdash; re-check the sections</span>`:""}
+    <button class="btn secondary" id="showHistory">Draft history</button>
+    <span id="histOut" class="small"></span>
+  </div>`;
+}
+
+/* Server-side checks (backend/schema.py). Advisory only: nothing in the draft was altered. */
+function checksHtml(r){
+  const f=r.review&&r.review.flags; if(!f)return "";
+  const items=[];
+  (f.schema||[]).forEach(x=>items.push(["schema",x]));
+  (f.inconsistent||[]).forEach(x=>items.push(["consistency",x]));
+  (f.evidenceMissing||[]).forEach(x=>items.push(["evidence",x+" \u2014 reads as prose about the entry, not a quotation from it"]));
+  (f.evidenceAbsent||[]).forEach(x=>items.push(["evidence",x+" \u2014 no quotation given"]));
+  (f.humanOnly||[]).forEach(x=>items.push(["invariant",x+(x==="distinctiveness.level"?" \u2014 the model assigned a D level; it was not carried into the record (the coder assigns it after the search log)":" \u2014 the model set a human-only field")]));
+  if(!items.length)return `<div class="checks ok">Automated checks found nothing. Your judgement still decides every field.</div>`;
+  return `<details class="checks" open><summary>${items.length} automated check${items.length===1?"":"s"} to look at <span class="small">\u2014 flagged only; the draft was not changed</span></summary><ul>`
+    +items.map(([k,v])=>`<li><span class="chip">${k}</span> ${esc(v)}</li>`).join("")+`</ul></details>`;
+}
+
+/* ---------------- blind second coding ----------------
+   Cohen's kappa measures whether two humans applying the instrument agree. If the second coder can
+   see the first coder's values — or the model's draft — the number measures anchoring instead. In
+   ?coder2=1 the sheet shows the game, the source entry and the second-coding controls, and nothing
+   else: no draft, no adjudicated values, no verdict bar, no pool columns. */
+const COD2 = new URLSearchParams(location.search).get("coder2") === "1";
+const C2FIELDS = [["route","Route",["R1","R2","R3"]],["MC","MC rule decomposability",["0","1","2"]],
+  ["LOM","LOM intrinsic objective",["0","1","2"]],["AGE","AGE developmental dependency",["0","1","2"]],
+  ["CTa","CT-a legibility",["0","1","2"]],["S","DIG(S) on screen",["Kept","Transformed","Substituted","Removed"]],
+  ["D","Distinctiveness",["D0","D1","D2"]]];
+
+function renderBlind(){
+  const r=current, b=$("#sheetBody");
+  $("#emptySheet").style.display="none"; b.style.display="";
+  const r2=r.review2||{};
+  b.innerHTML=`
+  <div class="blindbar">Blind second coding — the first coder's values and the model draft are hidden
+    on purpose. Judge from the entry and the instrument alone.</div>
+  <h2 class="name" style="margin-top:14px">${esc(r.name)}</h2>
+  <div class="sub">${r.review&&r.review.entry?`${r.review.entry.trim().split(/\s+/).length} words of source entry, left`:`<span class="chip warn">no source entry stored for this record</span>`}</div>
+  <section class="block">
+    <div class="blockhead"><h3>Second coding</h3><span class="why">independent judgement, same instrument</span></div>
+    <div class="grid2">${inp("review2.coder", r2.coder||"", "Your initials")}</div>
+    <div class="grid2" style="margin-top:10px">
+      ${C2FIELDS.map(([k,label,opts])=>`<div class="field"><label>${label}</label>${sel("review2."+k, r2[k]??"", [""].concat(opts))}</div>`).join("")}
+    </div>
+    <div class="hint">Leave a field blank if the entry does not let you decide; blank fields are excluded from &kappa;.</div>
+  </section>
+  <div class="foot"><button class="btn" id="saveRec">Save second coding</button>
+    <span class="small">Saved into <code>review2</code>. The first coder's record is not modified.</span></div>`;
+  b.querySelectorAll("[data-path]").forEach(el=>{
+    const upd=()=>{setPath(current, el.dataset.path, el.value); markDirty();};
+    el.addEventListener("input",upd); el.addEventListener("change",upd);
+  });
+  $("#saveRec").onclick=saveCurrent;
+  renderRail(); srcMode(r.review&&r.review.entry?"source":"paste");
+}
+
+/* ---------------- source entry pane ----------------
+   Design rule 4 asks every judgement to carry a quotation from the entry. That is only checkable if
+   the coder can see the entry, so records carry review.entry and each quotation can be located in
+   it. A quotation that cannot be found is shown as such — the same signal the server reports. */
+const SECTION_LIST=[["mechanic","Carrying mechanic"],["gates","Gates"],["route","Route"],
+  ["dimensions","Dimensions"],["dig","DIG profile"],["ledger","Ledger"],["distinct","Distinctiveness"]];
+
+function srcMode(mode){
+  const has=!!(current&&current.review&&current.review.entry);
+  const showSrc=mode==="source"&&has;
+  $("#srcPane").style.display=showSrc?"":"none";
+  $("#pastePane").style.display=showSrc?"none":"";
+  $("#tabSource").setAttribute("aria-pressed",showSrc);
+  $("#tabPaste").setAttribute("aria-pressed",!showSrc);
+  $("#tabSource").disabled=!has;
+  if(showSrc)renderEntry();
+}
+function renderEntry(){
+  ENTRY_IDX=null;
+  const e=current?.review?.entry||"";
+  $("#entryView").textContent=e;
+  const w=e.trim()?e.trim().split(/\s+/).length:0;
+  $("#srcMeta").textContent=w?`${w} words · ${e.length} characters`:"";
+}
+const normWS=t=>(t||"").replace(/\s+/g," ").trim();
+
+/* The entry wraps mid-sentence, so a quotation never matches it character-for-character.
+   Build a whitespace-normalised copy plus a map back to original offsets: search in the
+   normalised copy, highlight in the original. Without the map the highlight lands mid-word. */
+let ENTRY_IDX=null;
+function entryIndex(){
+  const e=current?.review?.entry||"";
+  if(ENTRY_IDX&&ENTRY_IDX.src===e)return ENTRY_IDX;
+  let norm="",map=[],prevSpace=true;
+  for(let i=0;i<e.length;i++){
+    const ch=e[i];
+    if(/\s/.test(ch)){ if(!prevSpace){norm+=" ";map.push(i);prevSpace=true;} }
+    else {
+      // Turkish \u0130 lowercases to TWO code units (i + combining dot), so map one entry per
+      // emitted character, not per source character, or every highlight after it drifts.
+      const lo=ch.toLowerCase(); norm+=lo;
+      for(let k=0;k<lo.length;k++)map.push(i);
+      prevSpace=false;
+    }
+  }
+  ENTRY_IDX={src:e,norm,map};
+  return ENTRY_IDX;
+}
+const toOrig=(idx,a,b)=>[idx.map[a], (idx.map[b-1]??idx.map[a])+1];
+
+/* strip the model's stitching: bracketed insertions, attribution, surrounding quote marks */
+function quoteFragments(q){
+  let t=(q||"").replace(/\[[^\]]*\]/g," ").replace(/^[^:]{0,40}(?:documents|writes|states|notes|records)\s*:/i," ");
+  return t.split(/\s*(?:\.\.\.|\u2026)\s*/)
+          .map(x=>normWS(x).replace(/^["'\u201c\u201d\u2018\u2019\u00ab\u00bb]+|["'\u201c\u201d\u2018\u2019\u00ab\u00bb]+$/g,""))
+          .filter(x=>x.length>8);
+}
+/* normalised spans for one fragment: the whole fragment, else its longest run of whole words */
+function fragSpan(idx,f){
+  const n=f.toLowerCase();
+  let i=idx.norm.indexOf(n);
+  if(i>=0)return [i,i+n.length];
+  const w=n.split(" ");
+  for(let len=Math.min(w.length,14);len>=4;len--)
+    for(let k=0;k+len<=w.length;k++){
+      const t=w.slice(k,k+len).join(" ");
+      const j=idx.norm.indexOf(t);
+      if(j>=0)return [j,j+t.length];
+    }
+  return null;
+}
+function paint(spans){
+  const view=$("#entryView"),e=current?.review?.entry||"";
+  view.innerHTML="";
+  if(!spans.length){view.textContent=e;return 0;}
+  spans.sort((a,b)=>a[0]-b[0]);
+  let pos=0;const frag=document.createDocumentFragment();
+  for(const [a,b,cls] of spans){
+    if(a<pos)continue;
+    frag.appendChild(document.createTextNode(e.slice(pos,a)));
+    const m=document.createElement("mark"); if(cls)m.className=cls;
+    m.textContent=e.slice(a,b); frag.appendChild(m); pos=b;
+  }
+  frag.appendChild(document.createTextNode(e.slice(pos)));
+  view.appendChild(frag);
+  const first=view.querySelector("mark");
+  if(first)first.scrollIntoView({block:"center"});
+  return spans.length;
+}
+/* locate a quotation in the entry and highlight it; returns the number of passages found */
+function locateQuote(q){
+  if(!$("#entryView")||!(current?.review?.entry))return 0;
+  const idx=entryIndex(),out=[];
+  for(const f of quoteFragments(q)){
+    const sp=fragSpan(idx,f);
+    if(sp)out.push([...toOrig(idx,sp[0],sp[1]),"hit"]);
+  }
+  return paint(out);
+}
+/* is any part of this quotation actually in the entry? drives the "not found" marker */
+function quoteFound(q){
+  if(!(current?.review?.entry))return true;
+  const frags=quoteFragments(q);
+  if(!frags.length)return true;
+  const idx=entryIndex();
+  return frags.some(f=>fragSpan(idx,f));
+}
+function findInEntry(term){
+  if(!$("#entryView"))return;
+  const t=normWS(term);
+  if(!t){renderEntry();return;}
+  const idx=entryIndex(),needle=t.toLowerCase(),out=[];
+  let pos=0;
+  for(;;){const i=idx.norm.indexOf(needle,pos);if(i<0)break;
+    out.push([...toOrig(idx,i,i+needle.length)]);pos=i+needle.length;if(out.length>400)break;}
+  const n=paint(out);
+  $("#srcMeta").textContent=n?`${n} match${n===1?"":"es"}`:"no match in the entry";
+}
+function renderRail(){
+  const r=$("#rail"); if(!r)return;
+  if(!current){r.innerHTML="";return;}
+  const sec=current.review?.sections||{};
+  r.innerHTML=SECTION_LIST.map(([k,label])=>
+    `<a href="#sec-${k}" class="${sec[k]?"done":""}"><i></i>${label}</a>`).join("");
+}
+
+/* ---------------- render the record sheet ---------------- */
+function lvl(path,val,max=2){return `<div class="levels" data-path="${path}">${[...Array(max+1).keys()].map(i=>`<button aria-pressed="${+val===i}" data-v="${i}">${i}</button>`).join("")}</div>`}
+function pf(path,val){return `<div class="pf" data-path="${path}"><button class="pass" aria-pressed="${!!val}" data-v="1">Pass</button><button class="fail" aria-pressed="${!val}" data-v="0">Fail</button></div>`}
+function sel(path,val,opts){return `<select data-path="${path}">${opts.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")}</select>`}
+function evHtml(ev){
+  if(!ev)return "";
+  const has=!!(current&&current.review&&current.review.entry);
+  const miss=has&&!quoteFound(ev);
+  return `<div class="ev${has?" clickable":""}${miss?" missing":""}" ${has?`data-quote="${esc(ev)}" title="Show this quotation in the entry"`:""}>${esc(ev)}</div>`;
+}
+function ta(path,val,label,ev){return `<div class="field"><label>${label}</label><textarea data-path="${path}">${esc(val)}</textarea>${evHtml(ev)}</div>`}
+function inp(path,val,label){return `<div class="field"><label>${label}</label><input data-path="${path}" value="${esc(val)}"></div>`}
+function head(key,title,why){const on=current.review?.sections?.[key];return `<a id="sec-${key}"></a><div class="blockhead"><h3>${title}</h3><span class="why">${why}</span><label class="rev"><input type="checkbox" data-rev="${key}" ${on?"checked":""}> reviewed</label></div>`}
+
+/* v0.5 retrieval log: written by /api/search, read-only here. The coder reviews it. */
+function searchLogHtml(d){
+  const g=d&&d.searchLog;
+  const empty=!g||!(g.date||(g.queries||[]).length||(g.candidatesInspected||[]).length||g.closestMatch);
+  if(empty)return `<div class="hint">No search log yet. The level stays unset until a log has been reviewed.</div>`;
+  const list=a=>(a||[]).map(x=>esc(typeof x==="string"?x:(x&&(x.title||x.url))||"")).filter(Boolean).join(" \u00b7 ");
+  const safe=u=>/^https?:\/\//i.test(u||"")?esc(u):"";
+  const cands=(g.candidatesInspected||[]).map(c=>{
+    if(typeof c==="string")return `<li>${esc(c)}</li>`;
+    const id=c.identifier?` <span class="chip">${esc(c.identifier.idType)} ${esc(c.identifier.id)}</span>`:` <span class="chip warn">no identifier</span>`;
+    return `<li>${safe(c.url)?`<a href="${safe(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.title||c.url)}</a>`:esc(c.title||"")}${id}${c.whatItShows?` <span class="small">${esc(c.whatItShows)}</span>`:""}</li>`;
+  }).join("");
+  return `<details class="checks" open><summary>Search log ${esc(g.date||"")}</summary>
+    <div class="small">Languages: ${list(g.languages)||"\u2013"}<br>Sources: ${list(g.sources)||"\u2013"}<br>Queries: ${list(g.queries)||"\u2013"}<br>
+    Closest match: ${esc(g.closestMatch||"\u2013")}<br>Separating core rule: ${esc(g.separatingRule||"\u2013")}</div>
+    <div class="small" style="margin-top:6px">Candidates inspected (${(g.candidatesInspected||[]).length}):</div><ul>${cands}</ul>
+    ${g.reasoning?`<div class="small">Reasoning: ${esc(g.reasoning)}</div>`:""}</details>`;
+}
+/* blank identifier fields mean "no counterpart retained" */
+function tidyCounterpart(r){
+  const c=r&&r.distinctiveness&&r.distinctiveness.counterpart;
+  if(c&&!(String(c.idType||"").trim()||String(c.id||"").trim()||String(c.url||"").trim()))r.distinctiveness.counterpart=null;
+}
+
+function renderSheet(){
+  const r=current; if(!r){$("#emptySheet").style.display="";$("#sheetBody").style.display="none";const rl=$("#rail");if(rl)rl.innerHTML="";return;}
+  if(COD2){renderBlind();return;}
+  $("#emptySheet").style.display="none"; const b=$("#sheetBody"); b.style.display="";
+  renderRail(); srcMode(current.review&&current.review.entry?"source":"paste");
+  const e=eligibility(r); const d=r.dimensions;
+  const conf=r.confidence?.overall!=null?`model confidence ${Math.round(r.confidence.overall*100)}%${r.confidence.low?.length?", least sure: "+r.confidence.low.join(", "):""}`:"";
+  b.innerHTML=`
+  <input class="text" data-path="name" value="${esc(r.name)}" style="font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:600;border:0;background:transparent;padding:0;letter-spacing:-.01em">
+  <div class="sub"><input data-path="altNames" value="${esc(r.altNames)}" placeholder="Other names, family" style="border:0;background:transparent;padding:0;width:60%;color:var(--muted)"> <span class="small">${conf}</span></div>
+
+  ${provHtml(r)}
+  <div class="verdict">${verdictHtml(r)}</div>
+  ${checksHtml(r)}
+
+  <section class="block">${head("mechanic","Carrying mechanic","the rule without which this is a different game")}
+    ${ta("carryingMechanic.text",r.carryingMechanic.text,"Statement",r.carryingMechanic.evidence)}
+    <div class="grid2" style="margin-top:8px">${inp("source.region",r.source.region,"Region(s) attested")}${inp("source.players",r.source.players,"Players")}${inp("source.session",r.source.session,"Session length")}</div>
+  </section>
+
+  <section class="block">${head("gates","Gates","fail any one and the game leaves the pool")}
+    ${[["G1","Rule system"],["G2","Bounded session"],["G3","Survival under some class"]].map(([k,t])=>`
+    <div class="gate"><div><div class="small" style="margin-bottom:4px">${k} ${t}</div>${pf("gates."+k+".pass",r.gates[k].pass)}</div>
+      <div>${ta("gates."+k+".reason",r.gates[k].reason,"Reason",r.gates[k].evidence)}
+      ${k==="G3"?`<div class="row" style="margin-top:4px"><span class="small">Survives under:</span>${["S","M","L"].map(c=>`<label class="small"><input type="checkbox" data-class="${c}" ${(r.gates.G3.classes||[]).includes(c)?"checked":""}> ${c}</label>`).join("")}</div>`:""}</div></div>`).join("")}
+  </section>
+
+  <section class="block">${head("route","Adaptation route","architecture, not a tier")}
+    <div class="grid2">
+      <div class="field"><label>Primary</label>${sel("route.primary",r.route.primary,["R1","R2","R3"])}</div>
+      <div class="field"><label>Secondary</label>${sel("route.secondary",r.route.secondary,["","R1","R2","R3"])}</div>
+    </div>
+    ${ta("route.test",r.route.test,"Deciding test applied")}
+  </section>
+
+  <section class="block">${head("dimensions","Dimensions","0–2, with the descriptor that was matched")}
+    <div class="grid2">
+      <div class="field"><label>MC rule decomposability</label>${lvl("dimensions.MC.level",d.MC.level)}${ta("dimensions.MC.descriptor",d.MC.descriptor,"Descriptor matched",d.MC.evidence)}</div>
+      <div class="field"><label>LOM intrinsic objective</label>${lvl("dimensions.LOM.level",d.LOM.level)}${inp("dimensions.LOM.objective",d.LOM.objective,"Learning behaviour found")}${ta("dimensions.LOM.counterfactual",d.LOM.counterfactual,"Counterfactual: content removed, what wins?",d.LOM.evidence)}</div>
+      <div class="field"><label>AGE developmental dependency</label>${lvl("dimensions.AGE.level",d.AGE.level)}${inp("dimensions.AGE.competence",d.AGE.competence,"Competence depended on")}${inp("dimensions.AGE.parameter",d.AGE.parameter,"Native scaling parameter")}</div>
+      <div class="field"><label>CT-a legibility (scored)</label>${lvl("dimensions.CTa.level",d.CTa.level)}<div style="margin-top:6px">${evHtml(d.CTa.evidence)}</div>
+        <label style="margin-top:10px">CT-b content dependence (recorded)</label>${lvl("dimensions.CTb.level",d.CTb.level)}${inp("dimensions.CTb.note",d.CTb.note,"")}
+        <label style="margin-top:10px">CT-c community relation (recorded)</label>${lvl("dimensions.CTc.level",d.CTc.level)}${inp("dimensions.CTc.note",d.CTc.note,"")}</div>
+    </div>
+  </section>
+
+  <section class="block">${head("dig","What survives, by interface class","S is the reported DIG score")}
+    <div class="grid2">${[["S","Screen-only touch"],["M","Motion or sensor"],["L","Location or co-located"]].map(([k,t])=>`
+      <div class="field"><label>${k} ${t}</label>${sel("dig."+k+".op",r.dig[k].op,["Kept","Transformed","Substituted","Removed"])}${ta("dig."+k+".note",r.dig[k].note,"")}</div>`).join("")}</div>
+  </section>
+
+  <section class="block">${head("ledger","Transformation ledger","one row per rule or material element, target class S")}
+    <div style="overflow-x:auto"><table class="ledger"><thead><tr><th style="width:18%">Element</th><th style="width:11%">Type</th><th style="width:22%">Original</th><th style="width:20%">Under S</th><th style="width:12%">Operation</th><th>Note</th><th></th></tr></thead>
+    <tbody>${r.ledger.map((row,i)=>`<tr>
+      <td><input data-path="ledger.${i}.element" value="${esc(row.element)}"></td>
+      <td>${sel("ledger."+i+".type",row.type,["Rule","Rule (carrying)","Material","Social"])}</td>
+      <td><input data-path="ledger.${i}.original" value="${esc(row.original)}"></td>
+      <td><input data-path="ledger.${i}.underS" value="${esc(row.underS)}"></td>
+      <td class="op-${row.operation}">${sel("ledger."+i+".operation",row.operation,["Kept","Transformed","Substituted","Removed","Added"])}</td>
+      <td><input data-path="ledger.${i}.note" value="${esc(row.note)}"></td>
+      <td><button class="pf" data-del="${i}" title="Remove row" style="border:0;background:none;cursor:pointer;color:var(--muted)">×</button></td></tr>`).join("")}</tbody></table></div>
+    <div class="row"><button class="btn secondary" id="addRow">Add row</button></div>
+  </section>
+
+  <section class="block">${head("distinct","Distinctiveness","the draft is a search hypothesis; you assign the level after reviewing the search log")}
+    <div class="grid2">
+      <div class="field"><label>Level (assigned by the coder)</label><select data-path="distinctiveness.level"><option value="" ${DLEVELS.includes(r.distinctiveness.level)?"":"selected"}>not set</option>${DLEVELS.map(o=>`<option value="${o}" ${o===r.distinctiveness.level?"selected":""}>${o}</option>`).join("")}</select><label style="margin-top:8px"><input type="checkbox" data-path="distinctiveness.verified" ${r.distinctiveness.verified?"checked":""}> search log reviewed by a human (verified)</label></div>
+      ${inp("distinctiveness.closest",r.distinctiveness.closest,"Hypothesis: counterpart or family to check first")}
+      ${inp("distinctiveness.separatingRule",r.distinctiveness.separatingRule,"Hypothesis: core rule expected to differ")}
+    </div>
+    ${ta("searchQueriesText",(r.distinctiveness.searchQueries||[]).join("\n"),"Search queries (names, alternative names, family terms), one per line")}
+    ${searchLogHtml(r.distinctiveness)}
+    <div class="grid2" style="margin-top:8px">
+      <div class="field"><label>Retained counterpart: identifier type</label>${sel("distinctiveness.counterpart.idType",(r.distinctiveness.counterpart&&r.distinctiveness.counterpart.idType)||"",["","ludii","bgg","wikipedia"])}</div>
+      ${inp("distinctiveness.counterpart.id",(r.distinctiveness.counterpart&&r.distinctiveness.counterpart.id)||"","Identifier (Ludii game, BoardGameGeek ID, Wikipedia title)")}
+      ${inp("distinctiveness.counterpart.url",(r.distinctiveness.counterpart&&r.distinctiveness.counterpart.url)||"","URL")}
+    </div>
+    <div class="hint">A counterpart is retained only with a resolvable identifier; leave all three blank for none. Confirm or override what the retrieval step retained.</div>
+    ${ta("distinctiveness.searchNote",r.distinctiveness.searchNote||"","Notes on the search (free text; records made under v0.1\u2013v0.4 keep their search note here)")}
+    ${REST&&META.search?`<div class="row"><button class="btn secondary" id="runSearch">Run retrieval for counterparts</button><span class="small">Writes the search log and the retained counterpart. It never sets the level or the verified flag; you do.</span></div>`:""}
+  </section>
+
+  <section class="block"><div class="blockhead"><h3>Source ambiguities</h3><span class="why">parameters the entry leaves open; each becomes a design hypothesis or a digitally added rule</span></div>
+    ${ta("ambiguitiesText",r.ambiguities.join("\n"),"One per line")}
+  </section>
+
+  <section class="block"><div class="blockhead"><h3>Second coding</h3><span class="why">independent levels from a second coder, entered blind from the exported draft</span></div>
+    <div class="grid2">
+      ${inp("review2.coder",r.review2?.coder||"","Second coder initials")}
+      <div class="field"><label>Route</label>${sel("review2.route",r.review2?.route||"",["","R1","R2","R3"])}</div>
+      <div class="field"><label>MC</label>${sel("review2.MC",r.review2?.MC??"",["","0","1","2"])}</div>
+      <div class="field"><label>LOM</label>${sel("review2.LOM",r.review2?.LOM??"",["","0","1","2"])}</div>
+      <div class="field"><label>AGE</label>${sel("review2.AGE",r.review2?.AGE??"",["","0","1","2"])}</div>
+      <div class="field"><label>CT-a</label>${sel("review2.CTa",r.review2?.CTa??"",["","0","1","2"])}</div>
+      <div class="field"><label>Survives on screen (S)</label>${sel("review2.S",r.review2?.S||"",["","Kept","Transformed","Substituted","Removed"])}</div>
+      <div class="field"><label>Distinctiveness</label>${sel("review2.D",r.review2?.D||"",["","D0","D1","D2"])}</div>
+    </div>
+  </section>
+
+  <section class="block"><div class="blockhead"><h3>Coder</h3></div>
+    <div class="grid2">${inp("review.coder",r.review?.coder||"","Initials")}${inp("review.notes",r.review?.notes||"","Review notes")}</div>
+    <div class="foot">
+      <button class="btn" id="saveRec">Save to pool</button>
+      <button class="btn secondary" id="copyRec">Copy record JSON</button>
+      ${r.review?.raw?`<button class="btn secondary" id="diffRec">Compare with model draft</button>`:""}
+      <button class="btn secondary" id="delRec" style="margin-left:auto;color:var(--fail)">Delete from pool</button>
+    </div>
+    <pre id="diffOut" class="small" style="display:none;white-space:pre-wrap;margin-top:12px"></pre>
+  </section>`;
+  wireSheet();
+}
+
+function setPath(obj,path,val){const p=path.split(".");let o=obj;for(let i=0;i<p.length-1;i++){if(o[p[i]]==null)o[p[i]]=isNaN(p[i+1])?{}:[];o=o[p[i]]}o[p[p.length-1]]=val;}
+function wireSheet(){
+  const b=$("#sheetBody");
+  b.querySelectorAll("[data-path]").forEach(el=>{
+    const upd=()=>{
+      const p=el.dataset.path;
+      if(p==="ambiguitiesText"){current.ambiguities=el.value.split("\n").map(s=>s.trim()).filter(Boolean);return;}
+      if(p==="searchQueriesText"){current.distinctiveness.searchQueries=el.value.split("\n").map(s=>s.trim()).filter(Boolean);markDirty();return;}
+      if(p==="distinctiveness.level"){current.distinctiveness.level=DLEVELS.includes(el.value)?el.value:null;markDirty();renderVerdictOnly();return;}
+      if(p.startsWith("distinctiveness.counterpart.")){setPath(current,p,el.value);tidyCounterpart(current);markDirty();return;}
+      if(el.type==="checkbox"){setPath(current,p,el.checked);markDirty();renderSheet();return;}
+      setPath(current,p,el.value); markDirty();
+      if(p.startsWith("dig.")||p.startsWith("dimensions.")||p.startsWith("route.")||p.startsWith("distinctiveness.level")){renderVerdictOnly();}
+    };
+    el.addEventListener("input",upd); el.addEventListener("change",upd);
+  });
+  b.querySelectorAll(".levels").forEach(g=>g.querySelectorAll("button").forEach(bt=>bt.onclick=()=>{setPath(current,g.dataset.path,+bt.dataset.v);g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===bt));dirty=true;renderVerdictOnly();}));
+  b.querySelectorAll(".pf[data-path]").forEach(g=>g.querySelectorAll("button").forEach(bt=>bt.onclick=()=>{setPath(current,g.dataset.path,bt.dataset.v==="1");g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===bt));dirty=true;renderVerdictOnly();}));
+  b.querySelectorAll("[data-class]").forEach(c=>c.onchange=()=>{const s=new Set(current.gates.G3.classes||[]);c.checked?s.add(c.dataset.class):s.delete(c.dataset.class);current.gates.G3.classes=[...s];markDirty();});
+  b.querySelectorAll("[data-rev]").forEach(c=>c.onchange=()=>{current.review=current.review||{sections:{}};current.review.sections=current.review.sections||{};current.review.sections[c.dataset.rev]=c.checked;dirty=true;renderVerdictOnly();});
+  const hb=$("#showHistory");
+  if(hb)hb.onclick=async()=>{
+    const out=$("#histOut"); out.textContent="loading…";
+    try{
+      const j=await (await fetch("/api/extractions?game="+encodeURIComponent(current.name))).json();
+      out.innerHTML=j.count
+        ? j.extractions.map(e=>`<div>${new Date(e.ts*1000).toLocaleString()} &middot; <code>${esc(e.provider)}</code> &middot; ${esc(e.tier)} &middot; instrument ${esc(e.instrument)}${e.stale?" (superseded)":""} &middot; ${e.flagCount} flag${e.flagCount===1?"":"s"}</div>`).join("")
+        : "no extraction rows for this game (drafted before provenance logging, or imported)";
+    }catch(e){out.textContent="could not load the history";}
+  };
+  const rx=$("#reextract");
+  if(rx)rx.onclick=async()=>{
+    if(!confirm("Re-draft "+current.name+" under instrument "+META.instrument+"?\n\nThe existing draft is kept, and your adjudicated values and reviewed ticks are left alone — but you should re-check them against the new descriptors."))return;
+    rx.disabled=true; rx.textContent="Re-extracting…";
+    try{
+      const res=await fetch("/api/records/"+encodeURIComponent(current.id)+"/reextract",{method:"POST"});
+      if(!res.ok)throw new Error(await res.text());
+      const j=await res.json();
+      const all=await (await fetch("/api/records")).json();
+      const fresh=all.find(x=>x.id===current.id);
+      if(fresh){records[fresh.id]=fresh;current=normalise(fresh,fresh.name);current.review=fresh.review;}
+      renderSheet(); renderPool();
+      toast("Re-extracted under "+j.meta.instrument+"; "+j.priorDrafts+" earlier draft kept");
+    }catch(e){toast("Re-extraction failed"); rx.disabled=false; rx.textContent="Re-extract";}
+  };
+  b.querySelectorAll(".ev.clickable").forEach(el=>el.onclick=()=>{
+    srcMode("source");
+    const n=locateQuote(el.dataset.quote);
+    $("#srcMeta").textContent=n?`${n} passage${n===1?"":"s"} located in the entry`:"this quotation was not found in the entry";
+  });
+  b.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>{current.ledger.splice(+x.dataset.del,1);renderSheet();});
+  $("#addRow").onclick=()=>{current.ledger.push({element:"",type:"Rule",original:"",underS:"",operation:"Kept",note:""});renderSheet();};
+  $("#saveRec").onclick=saveCurrent;
+  const rs=$("#runSearch"); if(rs)rs.onclick=async()=>{rs.disabled=true;rs.textContent="Searching…";try{
+    const d=current.distinctiveness;
+    const res=await fetch("/api/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:current.name,closest:d.closest,separatingRule:d.separatingRule,searchQueries:d.searchQueries||[]})});
+    if(!res.ok)throw new Error(await res.text());
+    const j=await res.json();
+    // the log and the retained counterpart only: never the level, never the verified flag
+    d.searchLog=Object.assign({},j.searchLog||{},{reasoning:j.reasoning||"",engine:j.engine||""});
+    d.counterpart=j.counterpart||null;
+    markDirty();renderSheet();toast(j.counterpart?"Search logged; review it, then set the level":"Search logged; no counterpart with a resolvable identifier");
+  }catch(e){toast("Search failed");rs.disabled=false;rs.textContent="Run retrieval for counterparts";}};
+  $("#copyRec").onclick=()=>{navigator.clipboard.writeText(JSON.stringify(current,null,2)).then(()=>toast("Record copied"))};
+  $("#delRec").onclick=async()=>{if(!current.id||!records[current.id]){toast("Not in the pool");return;}if(!confirm("Delete "+current.name+" from the pool?"))return;delete records[current.id];if(db){try{await db.collection("games").doc(current.id).delete()}catch(e){}}saveLocal();renderPool();toast("Deleted");};
+  const df=$("#diffRec"); if(df)df.onclick=()=>{const out=$("#diffOut");out.style.display=out.style.display==="none"?"":"none";out.textContent=diffText(current.review.raw,current);};
+}
+function renderVerdictOnly(){const v=$("#sheetBody .verdict");if(!v||!current)return;v.innerHTML=verdictHtml(current);renderRail();}
+
+function diffText(raw,cur){
+  const lines=[];const walk=(a,b,p)=>{if(a&&typeof a==="object"&&!Array.isArray(a)){for(const k of Object.keys(a))walk(a[k],b?.[k],p?p+"."+k:k);return;}
+    if(Array.isArray(a)){if(JSON.stringify(a)!==JSON.stringify(b))lines.push(p+": list changed ("+a.length+" → "+(b?.length??0)+")");return;}
+    if(String(a)!==String(b))lines.push(p+": "+JSON.stringify(a)+" → "+JSON.stringify(b));};
+  const c=JSON.parse(JSON.stringify(cur));delete c.review;delete c.id;walk(raw,c,"");
+  return lines.length?"Human edits to the model draft:\n"+lines.join("\n"):"No edits to the model draft yet.";
+}
+
+async function saveCurrent(){
+  if(!current)return; current.id=current.id||slug(current.name); current.review=current.review||{sections:{}}; current.review.updated=Date.now();
+  const clean=JSON.parse(JSON.stringify(current));
+  records[clean.id]=clean; saveLocal(); dirty=false; renderVerdictOnly();
+  if(db){try{await db.collection("games").doc(clean.id).set(clean);toast("Saved to the shared pool");}catch(e){toast("Saved locally; shared pool rejected the write ("+(e.code||"error")+")");}}
+  else toast("Saved to the local pool");
+  renderPool();
+}
+
+$("#newRecord").onclick=()=>{current=normalise({},$("#gameName").value||"Untitled");current.review={coder:"",sections:{},notes:"",raw:null};dirty=false;renderSheet();};
+$("#loadSample").onclick=()=>{current=JSON.parse(JSON.stringify(SAMPLE));dirty=false;renderSheet();document.querySelector('nav button[data-view="record"]').click();};
+
+/* ---------------- pool ---------------- */
+["fRoute","fS","fM","fLOM","fD","fRev","fQ"].forEach(id=>$("#"+id).addEventListener("input",renderPool));
+function renderPool(){
+  const all=Object.values(records); $("#poolN").textContent=all.length?"("+all.length+")":"";
+  const f={route:$("#fRoute").value,S:$("#fS").value,M:$("#fM").value,lom:$("#fLOM").value,d:$("#fD").value,rev:$("#fRev").value,q:$("#fQ").value.toLowerCase()};
+  const surv=(op,mode)=>!mode||(mode==="kept"?op==="Kept":ORDER[op]>=2);
+  const rows=all.filter(r=>{
+    const e=eligibility(r);
+    if(f.route&&r.route.primary!==f.route)return false;
+    if(!surv(r.dig.S.op,f.S)||!surv(r.dig.M.op,f.M))return false;
+    if(f.lom&&+r.dimensions.LOM.level<+f.lom)return false;
+    if(f.d==="D2"&&r.distinctiveness.level!=="D2")return false;
+    if(f.d==="D12"&&!["D1","D2"].includes(r.distinctiveness.level))return false;
+    if(f.d==="unset"&&DLEVELS.includes(r.distinctiveness.level))return false;
+    if(f.rev==="rev"&&e.reviewed<e.total)return false;
+    if(f.rev==="elig"&&!e.ok)return false;
+    if(f.q&&!(r.name+" "+r.altNames+" "+r.carryingMechanic.text+" "+r.dimensions.LOM.objective).toLowerCase().includes(f.q))return false;
+    return true;
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+  $("#poolCount").textContent=rows.length+" of "+all.length; $("#poolEmpty").style.display=all.length?"none":"";
+  const L=(v)=>`<span class="lv l${v}">${v}</span>`; const O=(op)=>`<span class="op-${op}">${op}</span>`;
+  $("#poolBody").innerHTML=rows.map(r=>{const e=eligibility(r);const g=["G1","G2","G3"].map(k=>r.gates[k].pass?"✓":"✗").join(" ");
+    const st=isStale(r)?` <span class="chip stale" title="drafted under ${esc((r.review&&r.review.meta&&r.review.meta.instrument)||'')}, current is ${esc(META.instrument||'')}">stale</span>`:"";
+    return `<tr><td class="name" data-open="${r.id}">${esc(r.name)}${st}<div class="tiny" style="font-family:'Instrument Sans',sans-serif">${esc(r.altNames)}</div></td>
+    <td>${r.route.primary}${r.route.secondary?"+"+r.route.secondary:""}</td><td>${g}</td>
+    <td>${L(r.dimensions.MC.level)}</td><td>${L(r.dimensions.LOM.level)}</td><td>${L(r.dimensions.AGE.level)}</td><td>${L(r.dimensions.CTa.level)}</td>
+    <td>${O(r.dig.S.op)}</td><td>${O(r.dig.M.op)}</td><td>${O(r.dig.L.op)}</td>
+    <td>${DLEVELS.includes(r.distinctiveness.level)?r.distinctiveness.level:"<span class='tiny'>unset</span>"}${r.distinctiveness.verified?"":"<span class='tiny'>?</span>"}</td>
+    <td>${esc(r.dimensions.LOM.objective)}</td>
+    <td>${e.ok?'<span class="chip pass">yes</span>':e.fails.length?'<span class="chip fail" title="'+esc(e.fails.join("; "))+'">no</span>':'<span class="chip">pending</span>'}${e.hybrid?' <span class="chip warn">hybrid</span>':""}</td>
+    <td class="tiny">${e.reviewed}/${e.total}${r.review?.coder?" · "+esc(r.review.coder):""}</td>
+    <td class="tiny">${r.review?.updated?new Date(r.review.updated).toLocaleDateString():""}</td></tr>`}).join("");
+  document.querySelectorAll("[data-open]").forEach(td=>td.onclick=()=>{current=JSON.parse(JSON.stringify(records[td.dataset.open]));renderSheet();document.querySelector('nav button[data-view="record"]').click();});
+}
+$("#importBtn").onclick=()=>{$("#importBox").style.display="";};
+$("#importCancel").onclick=()=>{$("#importBox").style.display="none";};
+$("#tabSource").onclick=()=>srcMode("source");
+$("#tabPaste").onclick=()=>srcMode("paste");
+$("#entryClear").onclick=()=>{$("#entryFind").value="";renderEntry();};
+$("#entryFind").addEventListener("input",e=>{const v=e.target.value;clearTimeout(window.__fT);window.__fT=setTimeout(()=>findInEntry(v),160);});
+document.getElementById("themeBtn").onclick=()=>{theme=THEMES[(THEMES.indexOf(theme)+1)%THEMES.length];try{localStorage.setItem("cm-theme",theme)}catch(e){}applyTheme(theme);};
+document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="s"){e.preventDefault();if(current)saveCurrent();}});
+window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue="";}});
+$("#importGo").onclick=async()=>{let arr;try{arr=JSON.parse($("#importText").value);}catch(e){toast("Not valid JSON");return;}if(!Array.isArray(arr))arr=[arr];let n=0;for(const x of arr){try{const r=normalise(x,x.name);r.review=x.review||{coder:"",sections:{},notes:"",raw:null};r.review2=x.review2||undefined;r.review.updated=Date.now();records[r.id]=r;if(db){try{await db.collection("games").doc(r.id).set(JSON.parse(JSON.stringify(r)))}catch(e){}}n++;}catch(e){}}saveLocal();renderPool();$("#importBox").style.display="none";$("#importText").value="";toast(n+" record"+(n===1?"":"s")+" added");};
+$("#exportBtn").onclick=()=>{navigator.clipboard.writeText(JSON.stringify(Object.values(records),null,2)).then(()=>toast("Pool copied as JSON"))};
+</script>
+</body>
+</html>

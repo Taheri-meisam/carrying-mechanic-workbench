@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Carrying Mechanic workbench: a selection instrument and workbench for traditional games"
+abstract: >-
+  Software for deciding, before any adaptation exists, which documented traditional games are
+  supported for a digital or hybrid interface. A language model drafts a structured record for each
+  game with a quotation for every judgement, a person decides every field, and eligibility is
+  computed by rule. Contains the instrument (v0.5), the record schema, the workbench, the evaluation
+  code, the test suite and a synthetic corpus. The encyclopaedia entries and the coded records are
+  not included.
+authors:
+  - family-names: Taheri
+    given-names: Meisam
+    affiliation: "University of Inland Norway"
+  - family-names: "Büber Kaya"
+    given-names: Hatice
+    affiliation: "Kırklareli University"
+version: "1.1.0"
+date-released: "2026-09-28"
+license: MIT
+repository-code: "https://github.com/Taheri-meisam/carrying-mechanic-workbench"
+keywords:
+  - traditional games
+  - game adaptation
+  - selection instrument
+  - human-in-the-loop
+  - large language models
+  - inter-rater reliability
+  - cultural heritage

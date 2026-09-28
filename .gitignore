@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# The live pool: a binary SQLite file that changes on every save
+data/
+
+# Source entries and coded records are not distributed; see NOTICE.md
+examples/corpus_full.json
+examples/corpus_nine_games.json
+examples/nine_games_model_drafts.json
+analysis/pool.json
+analysis/pool_public.json
+
+# Generated coding packs
+pack_*/
+coding_pack*/
+*.zip
